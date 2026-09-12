@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { FilePlus, ArrowLeft, Send } from 'lucide-react';
 
 export default function CreateMemo() {
   const { logout } = useAuth();
@@ -62,18 +63,23 @@ export default function CreateMemo() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '800px', paddingBottom: '40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h2>Create Official Memo</h2>
-        <Link href={`/admin/${secret}`} className="btn btn-secondary">Back to Dashboard</Link>
+    <div className="container" style={{ maxWidth: '800px', paddingBottom: '64px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <FilePlus size={28} style={{ color: 'var(--primary)' }} />
+          Create Official Memo
+        </h2>
+        <Link href={`/admin/${secret}`} className="btn btn-secondary">
+          <ArrowLeft size={18} /> Back
+        </Link>
       </div>
 
-      <div className="glass" style={{ padding: '32px', borderRadius: '24px' }}>
-        {error && <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>}
+      <div className="card" style={{ padding: '40px' }}>
+        {error && <div style={{ background: 'rgba(255,59,48,0.1)', color: 'var(--danger)', padding: '16px', borderRadius: '12px', marginBottom: '24px', fontWeight: 500 }}>{error}</div>}
         
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Document Title</label>
+            <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Document Title</label>
             <input 
               className="input" 
               value={title} 
@@ -84,7 +90,7 @@ export default function CreateMemo() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Summary (Optional)</label>
+            <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Summary (Optional)</label>
             <input 
               className="input" 
               value={summary} 
@@ -94,20 +100,20 @@ export default function CreateMemo() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Official Text (Body)</label>
+            <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Official Text (Body)</label>
             <textarea 
               className="input" 
               value={body} 
               onChange={e => setBody(e.target.value)} 
               placeholder="Enter the full authoritative text of the memo..." 
-              style={{ minHeight: '200px', resize: 'vertical' }}
+              style={{ minHeight: '220px', resize: 'vertical' }}
               required 
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Issued By</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Issued By</label>
               <input 
                 className="input" 
                 value={issuer} 
@@ -117,7 +123,7 @@ export default function CreateMemo() {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Department</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Department</label>
               <input 
                 className="input" 
                 value={department} 
@@ -128,9 +134,9 @@ export default function CreateMemo() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Date Issued</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Date Issued</label>
               <input 
                 className="input" 
                 type="date"
@@ -140,7 +146,7 @@ export default function CreateMemo() {
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Effective Date</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600, fontSize: '15px' }}>Effective Date</label>
               <input 
                 className="input" 
                 type="date"
@@ -151,9 +157,11 @@ export default function CreateMemo() {
             </div>
           </div>
 
-          <button type="submit" className="btn" disabled={loading} style={{ marginTop: '16px' }}>
-            {loading ? 'Publishing...' : 'Publish Official Record & Generate QR'}
-          </button>
+          <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0 0 0', paddingTop: '32px' }}>
+            <button type="submit" className="btn" disabled={loading} style={{ width: '100%', padding: '16px', fontSize: '16px' }}>
+              {loading ? 'Publishing securely...' : <><Send size={18} /> Publish Official Record & Generate QR</>}
+            </button>
+          </div>
         </form>
       </div>
     </div>
