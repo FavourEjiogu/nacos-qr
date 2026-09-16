@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { generateMemoHash } from '@/lib/crypto';
-import { AlertTriangle, ShieldCheck, User, Building, FileText, CalendarClock } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, User, Building, CalendarClock } from 'lucide-react';
 
-export default async function VerifyPage({ params }: { params: { id: string } }) {
-  // id in the URL is now the publicId (e.g. 7Y2KF94Q)
+export const revalidate = 60; // Cache this page for 60 seconds to easily support 1k+ concurrent DAU without DB strain
+
+export default async function VerifyPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const memo = await prisma.memo.findUnique({
     where: { publicId: params.id },
     include: { links: true }
@@ -11,15 +13,14 @@ export default async function VerifyPage({ params }: { params: { id: string } })
 
   if (!memo) {
     return (
-      <div className="container" style={{ textAlign: 'center', marginTop: '20vh' }}>
-        <AlertTriangle size={64} color="#ff3b30" style={{ marginBottom: '16px' }} />
-        <h1>Verification Failed</h1>
-        <p style={{ color: '#666', marginTop: '16px' }}>NACOS could not verify this reference. Do not rely on this document as official communication.</p>
+      <div className="container" style={{ textAlign: 'center', marginTop: '15vh' }}>
+        <AlertTriangle size={80} color="var(--danger)" style={{ marginBottom: '24px' }} />
+        <h1 style={{ fontSize: '32px', marginBottom: '16px', color: 'var(--danger)' }}>Record Not Found</h1>
+        <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>NACOS could not verify this reference. Do not rely on this document as official communication.</p>
       </div>
     );
   }
 
-  // Verify the hash dynamically
   const expectedHash = generateMemoHash({
     publicId: memo.publicId,
     serialNumber: memo.serialNumber,
@@ -40,83 +41,94 @@ export default async function VerifyPage({ params }: { params: { id: string } })
   const isDanger = isRevoked || isTampered;
   
   return (
-    <div className="container" style={{ maxWidth: '600px', paddingBottom: '64px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+    <div className="container">
+      <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '24px' }}>
         {isRevoked ? (
           <>
-            <AlertTriangle size={64} color="#ff3b30" style={{ marginBottom: '16px' }} />
-            <h1 style={{ color: '#ff3b30' }}>Memo Revoked</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>This memo was genuinely issued but has subsequently been withdrawn.</p>
+            <AlertTriangle size={80} color="var(--danger)" style={{ marginBottom: '20px' }} />
+            <h1 style={{ color: 'var(--danger)', fontSize: '36px', marginBottom: '12px' }}>Memo Revoked</h1>
+            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This memo was genuinely issued but has subsequently been withdrawn.</p>
             {memo.revocationReason && (
-              <p style={{ marginTop: '16px', background: '#ffebee', padding: '12px', borderRadius: '8px', color: '#c62828' }}>
-                <strong>Reason:</strong> {memo.revocationReason}
-              </p>
+              <div style={{ marginTop: '24px', display: 'inline-block' }}>
+                <div className="badge badge-danger">Revocation Reason</div>
+                <p style={{ marginTop: '8px', fontWeight: 500, color: 'var(--danger)' }}>{memo.revocationReason}</p>
+              </div>
             )}
           </>
         ) : isTampered ? (
           <>
-            <AlertTriangle size={64} color="#ff3b30" style={{ marginBottom: '16px' }} />
-            <h1 style={{ color: '#ff3b30' }}>Verification Failed</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>This memo has been tampered with. The verification signature does not match.</p>
+            <AlertTriangle size={80} color="var(--danger)" style={{ marginBottom: '20px' }} />
+            <h1 style={{ color: 'var(--danger)', fontSize: '36px', marginBottom: '12px' }}>Verification Failed</h1>
+            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This memo has been tampered with. The verification signature does not match.</p>
           </>
         ) : isWarning ? (
            <>
-            <AlertTriangle size={64} color="#ffcc00" style={{ marginBottom: '16px' }} />
-            <h1 style={{ color: '#ffcc00' }}>{isSuperseded ? 'Superseded' : 'Expired'}</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>This memo is authentic but is no longer the current instruction.</p>
+            <AlertTriangle size={80} color="var(--warning)" style={{ marginBottom: '20px' }} />
+            <h1 style={{ color: 'var(--warning)', fontSize: '36px', marginBottom: '12px' }}>{isSuperseded ? 'Superseded' : 'Expired'}</h1>
+            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This memo is authentic but is no longer the current instruction.</p>
           </>
         ) : (
           <>
-            <ShieldCheck size={64} color="#34c759" style={{ marginBottom: '16px' }} />
-            <h1 style={{ color: '#34c759' }}>Verified — Active</h1>
-            <p style={{ color: '#666', marginTop: '8px' }}>This record matches an official memo issued by NACOS Bingham University.</p>
+            <ShieldCheck size={80} color="var(--success)" style={{ marginBottom: '20px' }} />
+            <h1 style={{ color: 'var(--success)', fontSize: '36px', marginBottom: '12px' }}>Verified — Active</h1>
+            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This record matches an official memo issued by NACOS.</p>
           </>
         )}
       </div>
 
-      <div className="glass" style={{ padding: '32px', borderRadius: '24px', opacity: (isDanger || isWarning) ? 0.7 : 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '24px' }}>
-          <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>Reference</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', fontFamily: 'monospace' }}>{memo.serialNumber}</div>
+      <div className="glass" style={{ padding: '40px', borderRadius: '32px', opacity: (isDanger || isWarning) ? 0.8 : 1 }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px', borderBottom: '1px solid var(--border)', paddingBottom: '32px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--foreground)', opacity: 0.5, marginBottom: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: 600 }}>Official Reference</div>
+          <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '1px', marginBottom: '8px' }}>{memo.serialNumber}</div>
+          <div style={{ fontSize: '14px', fontFamily: 'monospace', color: 'var(--foreground)', opacity: 0.6 }}>Memo ID: {memo.publicId}</div>
         </div>
 
-        <h2 style={{ fontSize: '24px', marginBottom: '24px', lineHeight: 1.3 }}>{memo.title}</h2>
-        {memo.summary && <p style={{ fontSize: '18px', color: '#666', marginBottom: '24px' }}>{memo.summary}</p>}
+        <h2 style={{ fontSize: '28px', marginBottom: '24px', lineHeight: 1.25, fontWeight: 700 }}>{memo.title}</h2>
+        {memo.summary && <p style={{ fontSize: '18px', color: 'var(--foreground)', opacity: 0.7, marginBottom: '32px', lineHeight: 1.6 }}>{memo.summary}</p>}
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', color: '#666', fontSize: '14px' }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <CalendarClock size={16} />
-            <span><strong>Issued:</strong> {new Date(memo.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px', color: 'var(--foreground)', fontSize: '15px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--secondary)', padding: '16px', borderRadius: '16px' }}>
+            <CalendarClock size={20} style={{ opacity: 0.5 }} />
+            <div>
+              <div style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>Issued</div>
+              <div style={{ fontWeight: 500 }}>{new Date(memo.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <User size={16} />
-            <span><strong>Issued by:</strong> {memo.issuer}</span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--secondary)', padding: '16px', borderRadius: '16px' }}>
+            <User size={20} style={{ opacity: 0.5 }} />
+            <div>
+              <div style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>Issuer</div>
+              <div style={{ fontWeight: 500 }}>{memo.issuer}</div>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Building size={16} />
-            <span><strong>Department:</strong> {memo.department}</span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--secondary)', padding: '16px', borderRadius: '16px' }}>
+            <Building size={20} style={{ opacity: 0.5 }} />
+            <div>
+              <div style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>Department</div>
+              <div style={{ fontWeight: 500 }}>{memo.department}</div>
+            </div>
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '32px 0', marginBottom: '32px' }}>
-          <div style={{ fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', color: '#999', marginBottom: '16px', textAlign: 'center' }}>Official Memo</div>
-          <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, fontSize: '16px' }}>
+        <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '40px 0', marginBottom: '40px' }}>
+          <div style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--foreground)', opacity: 0.4, marginBottom: '24px', textAlign: 'center', fontWeight: 600 }}>Document Content</div>
+          <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: '17px', color: 'var(--foreground)' }}>
             {memo.body}
           </div>
         </div>
 
         {memo.links && memo.links.length > 0 && (
-          <div style={{ background: 'var(--secondary)', padding: '24px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>More Information</h3>
+          <div style={{ background: 'var(--secondary)', padding: '24px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 600 }}>Additional Resources</h3>
             {memo.links.map((link: { id: string, label: string, url: string }) => (
-              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
-                {link.label}
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 500 }}>
+                {link.label} ↗
               </a>
             ))}
           </div>
         )}
         
-        <div style={{ textAlign: 'center', background: '#f8f9fa', padding: '16px', borderRadius: '12px', fontSize: '14px', color: '#666' }}>
+        <div style={{ textAlign: 'center', background: 'var(--secondary)', padding: '20px', borderRadius: '16px', fontSize: '15px', color: 'var(--foreground)', opacity: 0.8, fontWeight: 500 }}>
           Compare the title, reference number, date and contents shown here with the document you received. If they differ, the document has been altered.
         </div>
       </div>
