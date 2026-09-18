@@ -11,10 +11,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { title, summary, body: memoBody, issuer, department, issuedAt, effectiveFrom, expiresAt, links } = body;
+    const { title, summary, body: memoBody, issuer, addressedTo, documentType, issuerPhone, issuedAt, effectiveFrom, expiresAt, links } = body;
 
-    if (!title || !memoBody || !issuer || !department || !issuedAt || !effectiveFrom) {
+    if (!title || !memoBody || !issuer || !addressedTo || !documentType || !issuedAt || !effectiveFrom) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (
+      String(title).length > 255 || 
+      String(memoBody).length > 50000 || 
+      String(issuer).length > 255 || 
+      String(addressedTo).length > 255
+    ) {
+      return NextResponse.json({ error: 'Payload size limit exceeded' }, { status: 413 });
     }
 
     let memo;
@@ -36,7 +45,9 @@ export async function POST(req: NextRequest) {
           title,
           body: memoBody,
           issuer,
-          department,
+          issuerPhone: issuerPhone ? String(issuerPhone).trim() : null,
+          addressedTo,
+          documentType,
           issuedAt: parsedIssuedAt,
           effectiveFrom: parsedEffectiveFrom,
           expiresAt: parsedExpiresAt,
