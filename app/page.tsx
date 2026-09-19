@@ -42,9 +42,15 @@ export default function Home() {
         </button>
       </form>
       
-      <p className="text-sm mt-8" style={{ textAlign: 'center' }}>
-        No account is required.
-      </p>
+      <div className="mt-8 text-sm" style={{ textAlign: 'center', opacity: 0.8 }}>
+        <p className="mb-4">No account is required.</p>
+        <p className="mb-4" style={{ fontWeight: 500 }}>
+          After verification, compare the official record shown on this site with the document you received.
+        </p>
+        <p className="mono" style={{ fontSize: '11px', letterSpacing: '0.05em' }}>
+          SCAN OR ENTER ID → VIEW OFFICIAL RECORD → COMPARE WITH DOCUMENT
+        </p>
+      </div>
     </div>
   );
 }
