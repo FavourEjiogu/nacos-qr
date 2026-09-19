@@ -36,7 +36,9 @@ Copy the example environment file and customize it:
 ```bash
 cp .env.example .env
 ```
-Inside `.env`, define your administrative password, a secure 64-character random string for your `APP_SECRET`, and your Neon Postgres `DATABASE_URL` (ensure you use the `-pooler` endpoint for Next.js serverless compatibility). **Note:** Always wrap your `ADMIN_PASSWORD` in single quotes (`'`) to prevent `dotenv-expand` evaluation bugs if using special characters like `$`.
+Inside `.env`, define your administrative password hash (`ADMIN_PASSWORD_HASH`), a secure random string for your `APP_SECRET`, and your Neon Postgres `DATABASE_URL`. Ensure you set the `ADMIN_ROUTE_SECRET` to a secure path for your admin portal. 
+
+For full details on configuring secrets, changing passwords, and deployment, see the [Getting Started Guide](./getting-started.md).
 
 ### 3. Database Initialization
 Push the schema to your Neon PostgreSQL database:
@@ -48,7 +50,7 @@ npx prisma db push
 ```bash
 npm run dev
 ```
-Navigate to `http://localhost:3000` to access the landing page. Log in at `http://localhost:3000/admin/<ADMIN_ROUTE_SECRET>` using your `.env` password.
+Navigate to `http://localhost:3000` to access the landing page. Log in at `http://localhost:3000/admin/<ADMIN_ROUTE_SECRET>` using your chosen password.
 
 ---
 
@@ -60,6 +62,8 @@ Navigate to `http://localhost:3000` to access the landing page. Log in at `http:
 
 ## Additional Documentation
 - [Getting Started Guide](./getting-started.md)
+- [Contributing Guidelines](./CONTRIBUTING.md)
+- [Security Threat Model](./couldgowrong.md)
 - [Security & Red Team Analysis](./AGENTS/red-teamer.md)
 - [Architecture Log](./AGENTS/artifact.md)
 
