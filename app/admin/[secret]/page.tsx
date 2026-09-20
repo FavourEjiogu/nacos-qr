@@ -111,7 +111,11 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                   
-                  <h3 className="heading" style={{ fontSize: '18px', marginBottom: '8px' }}>{memo.title}</h3>
+                  <h3 className="heading" style={{ fontSize: '18px', marginBottom: '4px' }}>{memo.title}</h3>
+                  
+                  <div className="text-sm" style={{ marginBottom: '8px' }}>
+                    Type: <span style={{ fontWeight: 500 }}>{memo.documentType || 'Other'}</span>
+                  </div>
                   
                   <div className="text-sm mb-4">
                     Issued: {new Date(memo.createdAt).toLocaleDateString()} | ID: <span className="mono">{memo.publicId}</span>
