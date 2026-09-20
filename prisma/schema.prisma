@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Memo {
+  id              String   @id @default(uuid())
+  serialNumber    String   @unique
+  title           String
+  content         String
+  authors         String   // JSON string
+  phoneNumbers    String   // JSON string
+  socialMediaLink String?
+  status          String   @default("VALID") // "VALID" or "REVOKED"
+  contentHash     String
+  createdAt       DateTime @default(now())
+
+  auditLogs       AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  memoId    String?
+  memo      Memo?    @relation(fields: [memoId], references: [id])
+  timestamp DateTime @default(now())
+}
