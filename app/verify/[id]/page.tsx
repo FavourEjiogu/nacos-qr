@@ -104,7 +104,7 @@ export default async function VerifyPage({ params }: { params: { id: string } })
       </div>
       
       <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '14px', color: '#999' }}>
-        <p>Secured by NACOS Memo Verification System</p>
+        <p>Secured by NACOS QR</p>
       </div>
     </div>
   );
