@@ -12,9 +12,11 @@
 ## Features
 
 - **Cryptographic Integrity (HMAC-SHA256):** Every memo generated is signed using a secure server-side secret. It is mathematically impossible to silently edit or tamper with a memo once it's created.
-- **QR Code Issuance:** Instantly generate downloadable QR codes that uniquely point to the verification portal.
-- **Memo Revocation:** Memos are immutable. If a mistake is made, the document is officially marked as "Revoked" permanently, preserving a transparent audit trail.
-- **Concurrency-Safe Serials:** Auto-generates sequential, collision-proof serial numbers in the `NACOSBHU/YY/MM/XXXX` format.
+- **QR Code Generation**: Automatically generate scannable QR codes for each memo.
+- **Verification Portal**: A public-facing verification page (`/verify/[id]`) that decodes and authenticates the memo's integrity.
+- **Hidden Admin Panel**: Protected admin dashboard nested behind a dynamic secret route (`/admin/[secret]`) to prevent unauthorized discovery.
+- **Secure Authentication**: Built-in IP rate limiting and robust password protection for memo administrators.
+- **PostgreSQL Database**: Scalable and production-ready database schema powered by Prisma ORM. Sequential, collision-proof serial numbers in the `NACOSBHU/YY/MM/XXXX` format.
 - **Premium UI/UX:** Built without heavy frameworks, utilizing Vanilla CSS for a beautiful, responsive, NACOS Green (`#00A859`) glassmorphism interface.
 
 ## Quick Start
