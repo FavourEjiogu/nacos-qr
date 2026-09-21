@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function AdminDashboard() {
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
   const { secret } = useParams<{secret: string}>();
   const [memos, setMemos] = useState<{id:string; serialNumber:string; title:string; status:string; createdAt:string}[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,13 +16,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     fetchMemos();
-  }, [token]);
+  }, []);
 
   const fetchMemos = async () => {
     try {
-      const res = await fetch('/api/admin/memos', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('/api/admin/memos');
       if (res.status === 401) {
         logout();
         return;
@@ -45,7 +43,6 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/memos/${id}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status: 'REVOKED' })
@@ -111,20 +108,21 @@ export default function AdminDashboard() {
             No memos found. Create one to get started.
           </div>
         ) : (
-          memos.map(memo => {
-            const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/verify/${memo.id}`;
+          memos.map((memo: any) => {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+            const verifyUrl = `${baseUrl}/verify/${memo.publicId}`;
             return (
               <div key={memo.id} className="glass" style={{ padding: '24px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={{ marginBottom: '8px' }}>{memo.title}</h3>
                   <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>
                     <strong>Serial:</strong> {memo.serialNumber} <br/>
-                    <strong>Status:</strong> <span style={{ color: memo.status === 'VALID' ? 'green' : 'red' }}>{memo.status}</span><br/>
+                    <strong>Status:</strong> <span style={{ color: memo.status === 'PUBLISHED' || memo.status === 'ACTIVE' ? 'green' : 'red' }}>{memo.status}</span><br/>
                     <strong>Date:</strong> {new Date(memo.createdAt).toLocaleDateString()}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <Link href={`/verify/${memo.id}`} target="_blank" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>View Public Page</Link>
-                    {memo.status === 'VALID' && (
+                    <Link href={`/verify/${memo.publicId}`} target="_blank" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>View Public Page</Link>
+                    {(memo.status === 'PUBLISHED' || memo.status === 'ACTIVE') && (
                       <button onClick={() => handleRevoke(memo.id)} className="btn" style={{ padding: '8px 16px', fontSize: '14px', background: '#ff3b30' }}>
                         Revoke
                       </button>

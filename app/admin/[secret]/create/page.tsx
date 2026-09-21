@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function CreateMemo() {
-  const { token, logout } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
   const { secret } = useParams<{secret: string}>();
   
@@ -14,10 +14,12 @@ export default function CreateMemo() {
   const [error, setError] = useState('');
   
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [authors, setAuthors] = useState('');
-  const [phoneNumbers, setPhoneNumbers] = useState('');
-  const [socialLink, setSocialLink] = useState('');
+  const [summary, setSummary] = useState('');
+  const [body, setBody] = useState('');
+  const [issuer, setIssuer] = useState('');
+  const [department, setDepartment] = useState('');
+  const [issuedAt, setIssuedAt] = useState('');
+  const [effectiveFrom, setEffectiveFrom] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,15 +30,16 @@ export default function CreateMemo() {
       const res = await fetch('/api/admin/memos', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           title,
-          content,
-          authors: authors.split(',').map(s => s.trim()).filter(Boolean),
-          phoneNumbers: phoneNumbers.split(',').map(s => s.trim()).filter(Boolean),
-          socialMediaLink: socialLink
+          summary,
+          body,
+          issuer,
+          department,
+          issuedAt,
+          effectiveFrom,
         })
       });
 
@@ -59,9 +62,9 @@ export default function CreateMemo() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '800px' }}>
+    <div className="container" style={{ maxWidth: '800px', paddingBottom: '40px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h2>Create New Memo</h2>
+        <h2>Create Official Memo</h2>
         <Link href={`/admin/${secret}`} className="btn btn-secondary">Back to Dashboard</Link>
       </div>
 
@@ -70,7 +73,7 @@ export default function CreateMemo() {
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Memo Title</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Document Title</label>
             <input 
               className="input" 
               value={title} 
@@ -81,52 +84,75 @@ export default function CreateMemo() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Memo Content (Text or Markdown)</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Summary (Optional)</label>
+            <input 
+              className="input" 
+              value={summary} 
+              onChange={e => setSummary(e.target.value)} 
+              placeholder="A brief 1-sentence summary" 
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Official Text (Body)</label>
             <textarea 
               className="input" 
-              value={content} 
-              onChange={e => setContent(e.target.value)} 
-              placeholder="Enter the full text of the memo..." 
+              value={body} 
+              onChange={e => setBody(e.target.value)} 
+              placeholder="Enter the full authoritative text of the memo..." 
               style={{ minHeight: '200px', resize: 'vertical' }}
               required 
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Authors (comma separated)</label>
-            <input 
-              className="input" 
-              value={authors} 
-              onChange={e => setAuthors(e.target.value)} 
-              placeholder="e.g. John Doe, Jane Smith" 
-              required 
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Issued By</label>
+              <input 
+                className="input" 
+                value={issuer} 
+                onChange={e => setIssuer(e.target.value)} 
+                placeholder="e.g. Office of the President" 
+                required 
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Department</label>
+              <input 
+                className="input" 
+                value={department} 
+                onChange={e => setDepartment(e.target.value)} 
+                placeholder="e.g. NACOS Bingham University" 
+                required 
+              />
+            </div>
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Phone Numbers (comma separated)</label>
-            <input 
-              className="input" 
-              value={phoneNumbers} 
-              onChange={e => setPhoneNumbers(e.target.value)} 
-              placeholder="e.g. +234 800 000 0000" 
-              required 
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Social Media Link (Optional)</label>
-            <input 
-              className="input" 
-              type="url"
-              value={socialLink} 
-              onChange={e => setSocialLink(e.target.value)} 
-              placeholder="https://twitter.com/nacos..." 
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Date Issued</label>
+              <input 
+                className="input" 
+                type="date"
+                value={issuedAt} 
+                onChange={e => setIssuedAt(e.target.value)} 
+                required 
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Effective Date</label>
+              <input 
+                className="input" 
+                type="date"
+                value={effectiveFrom} 
+                onChange={e => setEffectiveFrom(e.target.value)} 
+                required 
+              />
+            </div>
           </div>
 
           <button type="submit" className="btn" disabled={loading} style={{ marginTop: '16px' }}>
-            {loading ? 'Generating...' : 'Create Memo & Generate QR'}
+            {loading ? 'Publishing...' : 'Publish Official Record & Generate QR'}
           </button>
         </form>
       </div>

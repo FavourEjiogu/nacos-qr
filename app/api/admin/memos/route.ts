@@ -1,24 +1,23 @@
-// fix: use prisma singleton, remove direct PrismaClient instantiation
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateSerialNumber } from '@/lib/serial';
 import { generateMemoHash } from '@/lib/crypto';
 import { isAuthenticated } from '@/lib/auth';
+import { nanoid } from 'nanoid';
 
 export async function POST(req: NextRequest) {
-  if (!isAuthenticated(req)) {
+  if (!(await isAuthenticated(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { title, content, authors, phoneNumbers, socialMediaLink } = body;
+    const { title, summary, body: memoBody, issuer, department, issuedAt, effectiveFrom, expiresAt, links } = body;
 
-    if (!title || !content || !authors || !phoneNumbers) {
+    if (!title || !memoBody || !issuer || !department || !issuedAt || !effectiveFrom) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Retry loop for concurrency-safe serial number generation
     let memo;
     let attempts = 0;
     const MAX_ATTEMPTS = 5;
@@ -26,38 +25,46 @@ export async function POST(req: NextRequest) {
     while (attempts < MAX_ATTEMPTS) {
       try {
         const serialNumber = await generateSerialNumber();
+        const publicId = nanoid(8).toUpperCase(); // e.g. 7Y2KF94Q
         
         const contentHash = generateMemoHash({
+          publicId,
           serialNumber,
           title,
-          content,
-          authors: JSON.stringify(authors),
-          phoneNumbers: JSON.stringify(phoneNumbers),
-          socialMediaLink,
+          body: memoBody,
+          issuer,
+          department,
+          issuedAt,
+          effectiveFrom,
         });
 
         memo = await prisma.memo.create({
           data: {
+            publicId,
             serialNumber,
             title,
-            content,
-            authors: JSON.stringify(authors),
-            phoneNumbers: JSON.stringify(phoneNumbers),
-            socialMediaLink: socialMediaLink || null,
+            summary,
+            body: memoBody,
+            issuer,
+            department,
+            issuedAt: new Date(issuedAt),
+            effectiveFrom: new Date(effectiveFrom),
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
             contentHash,
+            status: 'PUBLISHED', // Direct publish for now, can implement Draft later
+            links: links && links.length > 0 ? {
+              create: links.map((link: {label: string, url: string}) => ({
+                label: link.label,
+                url: link.url
+              }))
+            } : undefined
           }
         });
-        break; // Success, exit retry loop
-      } catch (err: unknown) {
-        // Prisma code P2002 means Unique Constraint failed (collision on serialNumber)
-        const isPrismaUniqueViolation =
-          err instanceof Error &&
-          'code' in err &&
-          (err as Error & { code: string }).code === 'P2002';
-        if (isPrismaUniqueViolation) {
+        break; 
+      } catch (err: any) {
+        if (err.code === 'P2002') {
           attempts++;
-          if (attempts >= MAX_ATTEMPTS) throw new Error('High concurrency: Could not generate a unique serial number after 5 attempts.');
-          // Small random delay before retry
+          if (attempts >= MAX_ATTEMPTS) throw new Error('High concurrency error');
           await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
         } else {
           throw err;
@@ -67,23 +74,22 @@ export async function POST(req: NextRequest) {
 
     if (!memo) throw new Error('Failed to create memo.');
 
-    // Log the creation
     await prisma.auditLog.create({
       data: {
-        action: 'CREATE_MEMO',
+        action: 'MEMO_CREATED',
         memoId: memo.id,
       }
     });
 
     return NextResponse.json({ success: true, memo });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error creating memo:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthenticated(req)) {
+  if (!(await isAuthenticated(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -3,25 +3,31 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 type AuthContextType = {
-  token: string | null;
+  isAuthenticated: boolean;
   login: (password: string) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
-  token: null,
+  isAuthenticated: false,
   login: () => {},
   logout: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('admin_token');
-    if (saved) setToken(saved);
+    fetch('/api/admin/me')
+      .then(res => res.json())
+      .then(data => {
+        setIsAuthenticated(data.authenticated === true);
+        setInitialCheckDone(true);
+      })
+      .catch(() => setInitialCheckDone(true));
   }, []);
 
   const login = async (password: string) => {
@@ -38,8 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       
       if (res.ok && data.success) {
-        localStorage.setItem('admin_token', password);
-        setToken(password);
+        setIsAuthenticated(true);
       } else {
         setError(data.error || 'Invalid password');
       }
@@ -50,14 +55,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('admin_token');
-    setToken(null);
+  const logout = async () => {
+    await fetch('/api/admin/me', { method: 'POST' });
+    setIsAuthenticated(false);
   };
 
+  if (!initialCheckDone) return <div className="container" style={{textAlign:'center', marginTop:'20vh'}}>Loading...</div>;
+
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
-      {token ? (
+    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+      {isAuthenticated ? (
         children
       ) : (
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20vh' }}>

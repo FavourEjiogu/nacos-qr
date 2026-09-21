@@ -9,20 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.2.35",
     "@prisma/client": "^5.10.0",
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.12",
+    "lucide-react": "^0.330.0",
+    "next": "14.2.35",
     "qrcode.react": "^3.1.0",
-    "lucide-react": "^0.330.0"
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
-    "prisma": "^5.10.0"
+    "prisma": "^5.10.0",
+    "typescript": "^5"
   }
 }
