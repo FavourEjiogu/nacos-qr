@@ -1,0 +1,325 @@
+=== SCAN 1: Dependency Health ===
+  "dependencies": {
+    "react": "^18",
+    "react-dom": "^18",
+    "next": "14.2.35",
+    "@prisma/client": "^5.10.0",
+    "qrcode.react": "^3.1.0",
+    "lucide-react": "^0.330.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "prisma": "^5.10.0"
+  }
+}
+Critical: 1
+High: 4
+Moderate: 0
+Low: 0
+Total: 5
+
+=== SCAN 2: TypeScript Compilation Integrity ===
+0
+
+=== SCAN 3: ESLint & Build Verification ===
+
+> nacos-qr@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./app/admin/page.tsx
+17:6  Warning: React Hook useEffect has a missing dependency: 'fetchMemos'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/api/admin/memos/route.ts
+61:81  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+2
+
+=== SCAN 4: Dead Imports & Unused Exports ===
+app/verify/[id]/page.tsx:1:import { PrismaClient } from '@prisma/client';
+app/verify/[id]/page.tsx:2:import { generateMemoHash } from '@/lib/crypto';
+app/verify/[id]/page.tsx:3:import { AlertTriangle, ShieldCheck, User, Phone, Link as LinkIcon, FileText } from 'lucide-react';
+app/admin/create/page.tsx:3:import { useState } from 'react';
+app/admin/create/page.tsx:4:import { useAuth } from '../AuthContext';
+app/admin/create/page.tsx:5:import { useRouter } from 'next/navigation';
+app/admin/create/page.tsx:6:import Link from 'next/link';
+app/admin/AuthContext.tsx:3:import { createContext, useContext, useState, useEffect } from 'react';
+app/admin/layout.tsx:1:import { AuthProvider } from './AuthContext';
+app/admin/page.tsx:3:import { useState, useEffect } from 'react';
+app/admin/page.tsx:4:import { useAuth } from './AuthContext';
+app/admin/page.tsx:5:import Link from 'next/link';
+app/admin/page.tsx:6:import { QRCodeSVG } from 'qrcode.react';
+app/layout.tsx:1:import type { Metadata } from "next";
+app/layout.tsx:2:import localFont from "next/font/local";
+app/layout.tsx:3:import "./globals.css";
+app/page.tsx:1:import Link from 'next/link';
+app/page.tsx:2:import { ShieldCheck, QrCode } from 'lucide-react';
+app/api/admin/memos/route.ts:1:import { NextRequest, NextResponse } from 'next/server';
+app/api/admin/memos/route.ts:2:import { PrismaClient } from '@prisma/client';
+app/api/admin/memos/route.ts:3:import { generateSerialNumber } from '@/lib/serial';
+app/api/admin/memos/route.ts:4:import { generateMemoHash } from '@/lib/crypto';
+app/api/admin/memos/[id]/route.ts:1:import { NextRequest, NextResponse } from 'next/server';
+app/api/admin/memos/[id]/route.ts:2:import { PrismaClient } from '@prisma/client';
+lib/crypto.ts:1:import crypto from 'crypto';
+lib/serial.ts:1:import { PrismaClient } from '@prisma/client';
+UNUSED: 'next/link'; in app/admin/create/page.tsx
+UNUSED: 'next/link'; in app/admin/page.tsx
+UNUSED: { in app/layout.tsx
+UNUSED: } in app/layout.tsx
+UNUSED: "next"; in app/layout.tsx
+UNUSED: "next/font/local"; in app/layout.tsx
+UNUSED: "./globals.css"; in app/layout.tsx
+UNUSED: 'next/link'; in app/page.tsx
+UNUSED: 'crypto'; in lib/crypto.ts
+
+=== SCAN 5: Database Layer Audit ===
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+The schema at prisma/schema.prisma is valid 🚀
+┌─────────────────────────────────────────────────────────┐
+│  Update available 5.22.0 -> 8.0.0-rc.15                 │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Memo {
+  id              String   @id @default(uuid())
+  serialNumber    String   @unique
+  title           String
+  content         String
+  authors         String   // JSON string
+  phoneNumbers    String   // JSON string
+  socialMediaLink String?
+  status          String   @default("VALID") // "VALID" or "REVOKED"
+  contentHash     String
+  createdAt       DateTime @default(now())
+
+  auditLogs       AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  memoId    String?
+  memo      Memo?    @relation(fields: [memoId], references: [id])
+  timestamp DateTime @default(now())
+}
+app/verify/[id]/page.tsx:5:const prisma = new PrismaClient();
+app/api/admin/memos/route.ts:6:const prisma = new PrismaClient();
+app/api/admin/memos/[id]/route.ts:4:const prisma = new PrismaClient();
+lib/serial.ts:3:const prisma = new PrismaClient();
+42:*.db
+43:*.db-journal
+
+=== SCAN 6: Authentication & Authorization ===
+app/api/admin/memos/route.ts:8:function isAuthenticated(req: NextRequest) {
+app/api/admin/memos/route.ts:9:  const authHeader = req.headers.get('authorization');
+app/api/admin/memos/route.ts:12:  const token = authHeader.replace('Bearer ', '');
+app/api/admin/memos/route.ts:13:  return token === process.env.ADMIN_PASSWORD;
+app/api/admin/memos/route.ts:17:  if (!isAuthenticated(req)) {
+app/api/admin/memos/route.ts:90:  if (!isAuthenticated(req)) {
+app/api/admin/memos/[id]/route.ts:6:function isAuthenticated(req: NextRequest) {
+app/api/admin/memos/[id]/route.ts:7:  const authHeader = req.headers.get('authorization');
+app/api/admin/memos/[id]/route.ts:10:  const token = authHeader.replace('Bearer ', '');
+app/api/admin/memos/[id]/route.ts:11:  return token === process.env.ADMIN_PASSWORD;
+app/api/admin/memos/[id]/route.ts:15:  if (!isAuthenticated(req)) {
+app/api/admin/memos/route.ts: auth_checks=4
+app/api/admin/memos/[id]/route.ts: auth_checks=3
+29:.env*.local
+39:.env
+
+=== SCAN 7: Routing & Page Structure ===
+app/admin/create/page.tsx
+app/admin/page.tsx
+app/api/admin/memos/[id]/route.ts
+app/api/admin/memos/route.ts
+app/page.tsx
+app/verify/[id]/page.tsx
+./.next/server/pages
+./.next/static/chunks/pages
+app/admin/layout.tsx
+app/layout.tsx
+app/api/admin/memos/[id]
+app/verify/[id]
+
+=== SCAN 8: Environment Variables ===
+app/api/admin/memos/[id]/route.ts:11:  return token === process.env.ADMIN_PASSWORD;
+app/api/admin/memos/route.ts:13:  return token === process.env.ADMIN_PASSWORD;
+lib/crypto.ts:11:  const secret = process.env.APP_SECRET;
+ADMIN_PASSWORD=your_secure_password
+APP_SECRET=your_secure_random_string
+DATABASE_URL="file:./dev.db"
+
+=== SCAN 9: UI/UX Compliance ===
+app/globals.css:4:  --primary: hsl(152, 100%, 33%);
+app/globals.css:18:    --primary: hsl(152, 100%, 40%);
+app/globals.css:88:  box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.2);
+app/admin/create/page.tsx:77:              placeholder="e.g. Official Directive on Hackathon" 
+app/admin/create/page.tsx:88:              placeholder="Enter the full text of the memo..." 
+app/admin/create/page.tsx:100:              placeholder="e.g. John Doe, Jane Smith" 
+app/admin/create/page.tsx:111:              placeholder="e.g. +234 800 000 0000" 
+app/admin/create/page.tsx:123:              placeholder="https://twitter.com/nacos..." 
+app/admin/AuthContext.tsx:52:                placeholder="Enter Admin Password" 
+app/globals.css:8:  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+app/globals.css:33:  font-family: var(--font-inter);
+
+=== SCAN 10: File Hygiene & Gitignore ===
+.env.example
+.eslintrc.json
+.gitignore
+AGENTS/AGENTS.md
+AGENTS/artifact.md
+AGENTS/red-teamer.md
+README.md
+app/admin/AuthContext.tsx
+app/admin/create/page.tsx
+app/admin/layout.tsx
+app/admin/page.tsx
+app/api/admin/memos/[id]/route.ts
+app/api/admin/memos/route.ts
+app/favicon.ico
+app/fonts/GeistMonoVF.woff
+app/fonts/GeistVF.woff
+app/globals.css
+app/layout.tsx
+app/page.module.css
+app/page.tsx
+app/verify/[id]/page.tsx
+getting-started.md
+lib/crypto.ts
+lib/serial.ts
+next.config.mjs
+package-lock.json
+package.json
+prisma/schema.prisma
+tsconfig.json
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# env
+.env
+
+# database
+*.db
+*.db-journal
+
+=== SCAN 11: Security Surface ===
+lib/crypto.ts:25:  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+app/api/admin/memos/route.ts:22:    const body = await req.json();
+app/api/admin/memos/[id]/route.ts:20:    const body = await req.json();
+
+=== SCAN 12: Framework Configuration ===
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+export default nextConfig;
+{
+    "compilerOptions": {
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ],
+        "paths": {
+            "@/*": [
+                "./*"
+            ]
+        }
+    },
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        ".next/types/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
+{
+  "extends": ["next/core-web-vitals", "next/typescript"]
+}
+1:generator client {
+2:  provider = "prisma-client-js"
+5:datasource db {
+6:  provider = "sqlite"
+No Tailwind/PostCSS config files (expected)
+v22.19.0
+11.10.0

@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+// fix: use prisma singleton, remove direct PrismaClient instantiation
+import { prisma } from '@/lib/prisma';
 import { generateMemoHash } from '@/lib/crypto';
 import { AlertTriangle, ShieldCheck, User, Phone, Link as LinkIcon, FileText } from 'lucide-react';
-
-const prisma = new PrismaClient();
 
 export default async function VerifyPage({ params }: { params: { id: string } }) {
   const memo = await prisma.memo.findUnique({

@@ -1,9 +1,8 @@
+// fix: use prisma singleton, remove direct PrismaClient instantiation
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { generateSerialNumber } from '@/lib/serial';
 import { generateMemoHash } from '@/lib/crypto';
-
-const prisma = new PrismaClient();
 
 function isAuthenticated(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -58,7 +57,11 @@ export async function POST(req: NextRequest) {
         break; // Success, exit retry loop
       } catch (err: unknown) {
         // Prisma code P2002 means Unique Constraint failed (collision on serialNumber)
-        if (typeof err === 'object' && err !== null && 'code' in err && (err as any).code === 'P2002') {
+        const isPrismaUniqueViolation =
+          err instanceof Error &&
+          'code' in err &&
+          (err as Error & { code: string }).code === 'P2002';
+        if (isPrismaUniqueViolation) {
           attempts++;
           if (attempts >= MAX_ATTEMPTS) throw new Error('High concurrency: Could not generate a unique serial number after 5 attempts.');
           // Small random delay before retry

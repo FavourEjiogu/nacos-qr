@@ -1,7 +1,6 @@
+// fix: use prisma singleton, remove direct PrismaClient instantiation
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 function isAuthenticated(req: NextRequest) {
   const authHeader = req.headers.get('authorization');

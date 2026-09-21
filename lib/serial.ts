@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+// fix: use prisma singleton, remove direct PrismaClient instantiation
+import { prisma } from '@/lib/prisma';
 
 export async function generateSerialNumber(): Promise<string> {
   const date = new Date();
