@@ -1,14 +1,7 @@
 // fix: use prisma singleton, remove direct PrismaClient instantiation
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-function isAuthenticated(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader) return false;
-  
-  const token = authHeader.replace('Bearer ', '');
-  return token === process.env.ADMIN_PASSWORD;
-}
+import { isAuthenticated } from '@/lib/auth';
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (!isAuthenticated(req)) {

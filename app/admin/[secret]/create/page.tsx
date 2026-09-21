@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function CreateMemo() {
   const { token, logout } = useAuth();
   const router = useRouter();
+  const { secret } = useParams<{secret: string}>();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +47,7 @@ export default function CreateMemo() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        router.push('/admin');
+        router.push(`/admin/${secret}`);
       } else {
         setError(data.error || 'Failed to create memo');
       }
@@ -61,7 +62,7 @@ export default function CreateMemo() {
     <div className="container" style={{ maxWidth: '800px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h2>Create New Memo</h2>
-        <Link href="/admin" className="btn btn-secondary">Back to Dashboard</Link>
+        <Link href={`/admin/${secret}`} className="btn btn-secondary">Back to Dashboard</Link>
       </div>
 
       <div className="glass" style={{ padding: '32px', borderRadius: '24px' }}>

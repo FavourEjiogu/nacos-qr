@@ -1,6 +1,11 @@
+import { notFound } from 'next/navigation';
 import { AuthProvider } from './AuthContext';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children, params }: { children: React.ReactNode, params: { secret: string } }) {
+  if (params.secret !== process.env.ADMIN_ROUTE_SECRET) {
+    notFound();
+  }
+
   return (
     <AuthProvider>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

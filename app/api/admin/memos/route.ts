@@ -3,14 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateSerialNumber } from '@/lib/serial';
 import { generateMemoHash } from '@/lib/crypto';
-
-function isAuthenticated(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader) return false;
-  
-  const token = authHeader.replace('Bearer ', '');
-  return token === process.env.ADMIN_PASSWORD;
-}
+import { isAuthenticated } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   if (!isAuthenticated(req)) {

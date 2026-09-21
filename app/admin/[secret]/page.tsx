@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function AdminDashboard() {
   const { token, logout } = useAuth();
+  const { secret } = useParams<{secret: string}>();
   const [memos, setMemos] = useState<{id:string; serialNumber:string; title:string; status:string; createdAt:string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -96,7 +98,7 @@ export default function AdminDashboard() {
         <h2>Manage Memos</h2>
         <div style={{ display: 'flex', gap: '16px' }}>
           <button className="btn btn-secondary" onClick={downloadBackup}>Export Backup</button>
-          <Link href="/admin/create" className="btn">Create New Memo</Link>
+          <Link href={`/admin/${secret}/create`} className="btn">Create New Memo</Link>
           <button className="btn btn-secondary" onClick={logout}>Logout</button>
         </div>
       </div>
