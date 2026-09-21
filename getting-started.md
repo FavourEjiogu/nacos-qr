@@ -40,4 +40,4 @@
 ## Tech Stack Note
 - Do not use Tailwind CSS unless explicitly requested.
 - Use Vanilla CSS modules for styling.
-- Ensure iOS/Apple design patterns.
+

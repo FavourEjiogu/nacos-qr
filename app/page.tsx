@@ -20,10 +20,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-      
-      <p style={{ marginTop: '40px', color: '#999', fontSize: '14px' }}>
-        Designed for IOS/APPLE aesthetic standards.
-      </p>
     </div>
   );
 }

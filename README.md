@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-Production_Ready-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**NACOS QR** is the official system for generating and verifying cryptographic, tamper-proof memos for the Nigeria Association of Computing Students (NACOS). Designed with a premium, iOS-inspired glassmorphism aesthetic, it brings bank-level data integrity to official documentation.
+**NACOS QR** is the official system for generating and verifying cryptographic, tamper-proof memos for the Nigeria Association of Computing Students (NACOS). Designed with a premium glassmorphism aesthetic, it brings bank-level data integrity to official documentation.
 
 ---
 
