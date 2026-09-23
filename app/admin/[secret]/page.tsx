@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
+import { Plus, Download, LogOut, Ban, FileDown } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -80,63 +81,88 @@ export default function AdminDashboard() {
   const downloadBackup = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(memos, null, 2));
     const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "memos_backup.json");
-    document.body.appendChild(downloadAnchorNode); // required for firefox
+    document.body.appendChild(downloadAnchorNode); 
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <div style={{ opacity: 0.5, fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase' }}>Loading Registry...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container" style={{ maxWidth: '1000px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h2>Manage Memos</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 700, letterSpacing: '-0.5px' }}>Memo Registry</h2>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <button className="btn btn-secondary" onClick={downloadBackup}>Export Backup</button>
-          <Link href={`/admin/${secret}/create`} className="btn">Create New Memo</Link>
-          <button className="btn btn-secondary" onClick={logout}>Logout</button>
+          <button className="btn btn-secondary" onClick={downloadBackup}>
+            <Download size={18} /> Backup
+          </button>
+          <Link href={`/admin/${secret}/create`} className="btn">
+            <Plus size={18} /> New Memo
+          </Link>
+          <button className="btn btn-secondary" onClick={logout}>
+            <LogOut size={18} /> Logout
+          </button>
         </div>
       </div>
 
-      {error && <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>}
+      {error && <div style={{ background: 'rgba(255,59,48,0.1)', color: 'var(--danger)', padding: '16px', borderRadius: '12px', marginBottom: '24px', fontWeight: 500 }}>{error}</div>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {memos.length === 0 ? (
-          <div className="glass" style={{ padding: '32px', textAlign: 'center', borderRadius: '16px' }}>
-            No memos found. Create one to get started.
+          <div className="glass" style={{ padding: '64px', textAlign: 'center', borderRadius: '24px' }}>
+            <p style={{ opacity: 0.5, fontSize: '18px', fontWeight: 500 }}>No memos found in the registry.</p>
           </div>
         ) : (
           memos.map((memo: any) => {
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
             const verifyUrl = `${baseUrl}/verify/${memo.publicId}`;
+            const isActive = memo.status === 'PUBLISHED' || memo.status === 'ACTIVE';
+            
             return (
-              <div key={memo.id} className="glass" style={{ padding: '24px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h3 style={{ marginBottom: '8px' }}>{memo.title}</h3>
-                  <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>
-                    <strong>Serial:</strong> {memo.serialNumber} <br/>
-                    <strong>Status:</strong> <span style={{ color: memo.status === 'PUBLISHED' || memo.status === 'ACTIVE' ? 'green' : 'red' }}>{memo.status}</span><br/>
-                    <strong>Date:</strong> {new Date(memo.createdAt).toLocaleDateString()}
+              <div key={memo.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px' }}>
+                <div style={{ flex: 1, paddingRight: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '18px', letterSpacing: '0.5px' }}>{memo.serialNumber}</div>
+                    <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
+                      {memo.status}
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <Link href={`/verify/${memo.publicId}`} target="_blank" className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>View Public Page</Link>
-                    {(memo.status === 'PUBLISHED' || memo.status === 'ACTIVE') && (
-                      <button onClick={() => handleRevoke(memo.id)} className="btn" style={{ padding: '8px 16px', fontSize: '14px', background: '#ff3b30' }}>
-                        Revoke
+                  
+                  <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px', lineHeight: 1.3 }}>{memo.title}</h3>
+                  
+                  <div style={{ color: 'var(--foreground)', opacity: 0.6, fontSize: '14px', marginBottom: '24px', display: 'flex', gap: '16px' }}>
+                    <span>Issued: {new Date(memo.createdAt).toLocaleDateString()}</span>
+                    <span>•</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 500, letterSpacing: '0.5px' }}>ID: {memo.publicId}</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <Link href={`/verify/${memo.publicId}`} target="_blank" className="btn btn-secondary" style={{ padding: '10px 16px', fontSize: '14px' }}>
+                      Preview Public Page ↗
+                    </Link>
+                    {isActive && (
+                      <button onClick={() => handleRevoke(memo.id)} className="btn btn-danger" style={{ padding: '10px 16px', fontSize: '14px' }}>
+                        <Ban size={16} /> Revoke
                       </button>
                     )}
                   </div>
                 </div>
                 
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ background: 'white', padding: '16px', borderRadius: '12px', display: 'inline-block' }}>
-                    <QRCodeSVG id={`qr-${memo.id}`} value={verifyUrl} size={128} />
+                <div style={{ textAlign: 'center', background: 'var(--secondary)', padding: '24px', borderRadius: '20px', minWidth: '180px' }}>
+                  <div style={{ background: 'white', padding: '12px', borderRadius: '12px', display: 'inline-block', marginBottom: '16px' }}>
+                    <QRCodeSVG id={`qr-${memo.id}`} value={verifyUrl} size={112} level="H" />
                   </div>
-                  <div style={{ marginTop: '8px' }}>
-                    <button onClick={() => downloadQR(memo.id, memo.serialNumber)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                      Download QR
+                  <div>
+                    <button onClick={() => downloadQR(memo.id, memo.serialNumber)} className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '13px', width: '100%' }}>
+                      <FileDown size={14} /> Save QR Code
                     </button>
                   </div>
                 </div>
