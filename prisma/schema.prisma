@@ -20,7 +20,9 @@ model Memo {
   expiresAt            DateTime?
   status               String     @default("ACTIVE")
   issuer               String
-  department           String
+  issuerPhone          String?
+  addressedTo          String     @map("department")
+  documentType         String     @default("Other")
   contentHash          String
   officialDocumentHash String?
   createdAt            DateTime   @default(now())
