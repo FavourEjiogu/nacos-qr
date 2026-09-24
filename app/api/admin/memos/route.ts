@@ -95,7 +95,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const memos = await prisma.memo.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 100 // Prevent massive payloads for admin panel
     });
     return NextResponse.json({ memos });
   } catch {

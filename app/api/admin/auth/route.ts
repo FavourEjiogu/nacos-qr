@@ -7,7 +7,7 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function POST(req: NextRequest) {
   // Get IP for rate limiting
-  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
   const now = new Date();
   const windowStart = new Date(now.getTime() - WINDOW_MS);
   
@@ -62,7 +62,8 @@ export async function POST(req: NextRequest) {
       }
     });
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  } catch (err: any) {
+    console.error("Auth error:", err);
+    return NextResponse.json({ error: err.message || 'Invalid request body' }, { status: 400 });
   }
 }
