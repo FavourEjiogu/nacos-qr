@@ -14,9 +14,11 @@ export default function CreateMemo() {
   const [error, setError] = useState('');
   
   const [title, setTitle] = useState('');
+  const [documentType, setDocumentType] = useState('Internal Memorandum');
   const [body, setBody] = useState('');
   const [issuer, setIssuer] = useState('');
-  const [department, setDepartment] = useState('');
+  const [issuerPhone, setIssuerPhone] = useState('');
+  const [addressedTo, setAddressedTo] = useState('');
   const [issuedAt, setIssuedAt] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -36,9 +38,11 @@ export default function CreateMemo() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
+          documentType,
           body,
           issuer,
-          department,
+          issuerPhone,
+          addressedTo,
           issuedAt,
           effectiveFrom: effectiveDate,
           expiresAt: expiresAt || null,
@@ -141,6 +145,26 @@ export default function CreateMemo() {
           </div>
 
           <div>
+            <label>Document Type</label>
+            <select
+              className="input"
+              value={documentType}
+              onChange={e => setDocumentType(e.target.value)}
+              required
+            >
+              <option value="Internal Memorandum">Internal Memorandum</option>
+              <option value="External Communication">External Communication</option>
+              <option value="Partnership / Sponsorship">Partnership / Sponsorship</option>
+              <option value="Proposal">Proposal</option>
+              <option value="Notice / Circular">Notice / Circular</option>
+              <option value="Invitation">Invitation</option>
+              <option value="Appointment / Designation">Appointment / Designation</option>
+              <option value="Policy / Directive">Policy / Directive</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
             <label>Official Text (Body)</label>
             <textarea 
               className="input"
@@ -154,7 +178,7 @@ export default function CreateMemo() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <label>Issuer</label>
+              <label>Issued By</label>
               <input 
                 className="input"
                 value={issuer} 
@@ -164,15 +188,26 @@ export default function CreateMemo() {
               />
             </div>
             <div>
-              <label>Department</label>
+              <label>Issuer WhatsApp <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--foreground)', opacity: 0.7 }}>(Shown publicly to document verifiers)</span></label>
               <input 
+                type="tel"
                 className="input"
-                value={department} 
-                onChange={e => setDepartment(e.target.value)} 
-                placeholder="e.g. NACOS Bingham University" 
-                required 
+                value={issuerPhone} 
+                onChange={e => setIssuerPhone(e.target.value)} 
+                placeholder="e.g. +2348012345678" 
               />
             </div>
+          </div>
+
+          <div>
+            <label>Addressed To</label>
+            <input 
+              className="input"
+              value={addressedTo} 
+              onChange={e => setAddressedTo(e.target.value)} 
+              placeholder="e.g. All NACOSites / Faculty of Computing Students" 
+              required 
+            />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
