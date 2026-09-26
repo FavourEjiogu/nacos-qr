@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import { AuthProvider } from './AuthContext';
 
-export default function AdminLayout({ children, params }: { children: React.ReactNode, params: { secret: string } }) {
+export default async function AdminLayout(props: { children: React.ReactNode, params: Promise<{ secret: string }> }) {
+  const { children } = props;
+  const params = await props.params;
   if (params.secret !== process.env.ADMIN_ROUTE_SECRET) {
     notFound();
   }

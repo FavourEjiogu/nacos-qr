@@ -7,6 +7,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  destroySession();
+  await destroySession();
   return NextResponse.json({ success: true });
 }

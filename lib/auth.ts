@@ -13,7 +13,8 @@ export async function createSession() {
     .setExpirationTime('2h')
     .sign(JWT_SECRET);
 
-  cookies().set(COOKIE_NAME, token, {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -22,8 +23,9 @@ export async function createSession() {
   });
 }
 
-export function destroySession() {
-  cookies().delete(COOKIE_NAME);
+export async function destroySession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
 }
 
 export async function verifyPassword(password: string): Promise<boolean> {
@@ -36,9 +38,10 @@ export async function verifyPassword(password: string): Promise<boolean> {
 }
 
 export async function isAuthenticated(req?: NextRequest): Promise<boolean> {
+  const cookieStore = await cookies();
   const token = req 
     ? req.cookies.get(COOKIE_NAME)?.value 
-    : cookies().get(COOKIE_NAME)?.value;
+    : cookieStore.get(COOKIE_NAME)?.value;
 
   if (!token) return false;
 
