@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
       await tx.auditLog.create({
         data: {
-          action: 'REVOKE_MEMO',
+          action: 'MEMO_REVOKED',
           memoId: updatedMemo.id,
         }
       });
