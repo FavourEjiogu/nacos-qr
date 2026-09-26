@@ -42,3 +42,12 @@ next-env.d.ts
 *.db
 *.db-journal
 .neon
+
+# Project-specific ignores (Logs, Agent Memory, Threat Models)
+*.log
+AGENTS/
+AGENTS.md
+couldgowrong.md
+CLAUDE.md
+.agents/
+skills-lock.json
