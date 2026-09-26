@@ -45,8 +45,12 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
   const isWarning = isExpired;
   const isDanger = isRevoked || isTampered;
   
+  const whatsappUrl = memo.issuerPhone 
+    ? `https://wa.me/${memo.issuerPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hello, I am contacting you regarding NACOS document ${memo.serialNumber}. I would like to ask about this document.`)}` 
+    : null;
+
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: '700px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h2 className="heading text-sm mb-2" style={{ fontWeight: 400, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           NACOS
@@ -77,43 +81,59 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
             <p className="text-sm">This memo matches an official NACOS record.</p>
           </>
         )}
+
+        <div style={{ marginTop: '16px', padding: '16px', background: 'var(--secondary)', borderRadius: '4px', textAlign: 'left' }}>
+          <p className="text-sm" style={{ fontWeight: 500 }}>This is the official NACOS record associated with this verification ID.</p>
+          {!isDanger && !isWarning && (
+            <p className="text-sm" style={{ marginTop: '8px' }}>Compare the details on this page with the document you received before relying on it.</p>
+          )}
+        </div>
       </div>
 
       <div className="card" style={{ opacity: (isDanger || isWarning) ? 0.9 : 1 }}>
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Reference</div>
           <div className="mono" style={{ fontSize: '16px', fontWeight: 500 }}>{memo.serialNumber}</div>
         </div>
         
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Verification ID</div>
           <div className="mono" style={{ fontSize: '16px', fontWeight: 500 }}>{memo.publicId}</div>
         </div>
 
-        <div className="mb-8">
-          <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Title</div>
-          <div className="heading" style={{ fontSize: '20px', fontWeight: 500 }}>{memo.title}</div>
+        <div className="mb-6">
+          <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Document Type</div>
+          <div style={{ fontSize: '16px', fontWeight: 500 }}>{memo.documentType || 'Other'}</div>
         </div>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }} className="mb-8">
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }} className="mb-6">
           <div>
             <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Issued</div>
             <div style={{ fontWeight: 500 }}>{new Date(memo.issuedAt).toLocaleDateString()}</div>
           </div>
           <div>
-            <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Issuer</div>
+            <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Issued By</div>
             <div style={{ fontWeight: 500 }}>{memo.issuer}</div>
           </div>
           <div style={{ gridColumn: 'span 2' }}>
-            <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Department</div>
-            <div style={{ fontWeight: 500 }}>{memo.department}</div>
+            <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Addressed To</div>
+            <div style={{ fontWeight: 500 }}>{memo.addressedTo}</div>
           </div>
         </div>
+
+        {memo.issuerPhone && (
+          <div className="mb-8">
+            <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>WhatsApp Contact</div>
+            <a href={whatsappUrl!} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', fontWeight: 500, color: 'var(--foreground)', textDecoration: 'underline' }}>
+              Contact Issuer on WhatsApp ↗
+            </a>
+          </div>
+        )}
 
         <hr />
         
         <div className="mb-8">
-          <h3 className="heading text-sm mb-4" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Official Memo</h3>
+          <h3 className="heading mb-4" style={{ fontSize: '20px', fontWeight: 500 }}>{memo.title}</h3>
           <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, fontSize: '15px' }}>
             {memo.body}
           </div>
@@ -136,13 +156,24 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
         
         <hr />
         
-        <div style={{ background: 'var(--secondary)', padding: '24px', borderRadius: '4px' }}>
+        <div style={{ background: 'var(--secondary)', padding: '24px', borderRadius: '4px', marginBottom: '24px' }}>
           <h3 className="heading" style={{ fontSize: '15px', marginBottom: '8px', fontWeight: 500 }}>COMPARE WITH YOUR DOCUMENT</h3>
           <p className="text-sm">
-            Check that the reference number, title, date, issuer and contents shown here match the document you received.
-            If important details differ, do not rely on the document.
+            Compare the information shown here with the document you received. Check the reference, document type, dates, issuer, recipient, and contents. If important details differ, do not rely on the document.
           </p>
         </div>
+
+        {memo.issuerPhone && (
+          <div style={{ border: '1px solid var(--border)', padding: '24px', borderRadius: '4px', textAlign: 'center' }}>
+            <h3 className="heading" style={{ fontSize: '16px', marginBottom: '8px', fontWeight: 500 }}>Found a problem with this document?</h3>
+            <p className="text-sm mb-4">
+              Contact the issuing person or office on WhatsApp to report a discrepancy or ask a question.
+            </p>
+            <a href={whatsappUrl!} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ display: 'inline-block' }}>
+              Contact Issuer on WhatsApp
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
