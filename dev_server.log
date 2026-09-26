@@ -47,3 +47,4 @@
  GET /admin/admin_secret_local/create 200 in 123ms (next.js: 27ms, application-code: 96ms)
  GET /admin/x7k9m2p3j8 200 in 257ms (next.js: 53ms, application-code: 204ms)
  GET /admin/admin_secret_local/create 200 in 139ms (next.js: 43ms, application-code: 96ms)
+ POST /api/admin/memos 401 in 47ms (next.js: 22ms, application-code: 26ms)
