@@ -44,10 +44,18 @@ export async function verifyPassword(password: string): Promise<boolean> {
 }
 
 export async function isAuthenticated(req?: NextRequest): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = req 
-    ? req.cookies.get(COOKIE_NAME)?.value 
-    : cookieStore.get(COOKIE_NAME)?.value;
+  let token: string | undefined = undefined;
+  
+  if (req) {
+    token = req.cookies.get(COOKIE_NAME)?.value;
+  } else {
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get(COOKIE_NAME)?.value;
+    } catch (e) {
+      // Ignore if outside next.js scope during tests
+    }
+  }
 
   if (!token) return false;
 
