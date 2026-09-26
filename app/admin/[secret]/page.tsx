@@ -70,30 +70,30 @@ export default function AdminDashboard() {
   };
 
   if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center' }}>Loading Registry...</div>;
+    return <div className="container" style={{ textAlign: 'center' }}>Loading Registry...</div>;
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_VERIFY_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 700 }}>Memo Registry</h2>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <Link href={`/admin/${secret}/create`} style={{ background: 'var(--primary)', color: '#fff', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none', fontWeight: 600 }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '4rem 1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="mb-8">
+        <h2 className="heading" style={{ fontSize: '24px' }}>Memo Registry</h2>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link href={`/admin/${secret}/create`} className="btn">
             New Memo
           </Link>
-          <button onClick={logout} style={{ background: 'var(--secondary)', border: '1px solid var(--border)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
+          <button onClick={logout} className="btn btn-secondary">
             Logout
           </button>
         </div>
       </div>
 
-      {error && <div style={{ color: 'var(--danger)', padding: '12px', background: 'rgba(255,0,0,0.1)', borderRadius: '4px', marginBottom: '24px' }}>{error}</div>}
+      {error && <div className="badge badge-danger mb-4" style={{ display: 'block', padding: '12px', textAlign: 'center' }}>{error}</div>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {memos.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', border: '1px solid var(--border)', borderRadius: '8px' }}>
+          <div className="card" style={{ textAlign: 'center' }}>
             No memos found in the registry.
           </div>
         ) : (
@@ -102,44 +102,37 @@ export default function AdminDashboard() {
             const isActive = memo.status === 'ACTIVE';
             
             return (
-              <div key={memo.id} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '24px', display: 'flex', justifyContent: 'space-between', background: 'var(--background)' }}>
+              <div key={memo.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', padding: '24px' }}>
                 <div style={{ flex: 1, paddingRight: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '18px' }}>{memo.serialNumber}</span>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      fontSize: '12px', 
-                      fontWeight: 600,
-                      background: isActive ? 'var(--success)' : 'var(--danger)',
-                      color: '#fff'
-                    }}>
+                    <span className="mono" style={{ fontWeight: 500, fontSize: '18px' }}>{memo.serialNumber}</span>
+                    <span className={`badge ${isActive ? 'badge-success' : 'badge-danger'}`}>
                       {memo.status}
                     </span>
                   </div>
                   
-                  <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>{memo.title}</h3>
+                  <h3 className="heading" style={{ fontSize: '18px', marginBottom: '8px' }}>{memo.title}</h3>
                   
-                  <div style={{ fontSize: '14px', opacity: 0.7, marginBottom: '16px' }}>
-                    Issued: {new Date(memo.createdAt).toLocaleDateString()} | ID: {memo.publicId}
+                  <div className="text-sm mb-4">
+                    Issued: {new Date(memo.createdAt).toLocaleDateString()} | ID: <span className="mono">{memo.publicId}</span>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <Link href={`/verify/${memo.publicId}`} target="_blank" style={{ textDecoration: 'none', color: 'var(--primary)', fontWeight: 600 }}>
-                      Open Page ↗
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <Link href={`/verify/${memo.publicId}`} target="_blank" style={{ fontWeight: 500 }}>
+                      View ↗
                     </Link>
                     <button 
                       onClick={() => { navigator.clipboard.writeText(verifyUrl); alert('URL copied'); }} 
-                      style={{ border: 'none', background: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }}
+                      style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '4px' }}
                     >
                       Copy URL
                     </button>
                     {isActive && (
                       <button 
-                        onClick={() => handleRevoke(memo.id)} 
-                        style={{ border: 'none', background: 'none', color: 'var(--danger)', fontWeight: 600, cursor: 'pointer' }}
+                         onClick={() => handleRevoke(memo.id)} 
+                         style={{ fontWeight: 500, cursor: 'pointer', color: 'var(--danger)', textDecoration: 'underline', textUnderlineOffset: '4px' }}
                       >
-                        Revoke
+                         Revoke
                       </button>
                     )}
                   </div>
@@ -151,9 +144,10 @@ export default function AdminDashboard() {
                   </div>
                   <button 
                     onClick={() => downloadQRSVG(memo.id, memo.serialNumber)} 
-                    style={{ background: 'var(--secondary)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '12px' }}
                   >
-                    Download QR SVG
+                    Download QR
                   </button>
                 </div>
               </div>

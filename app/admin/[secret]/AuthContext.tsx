@@ -67,10 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {isAuthenticated ? (
         children
       ) : (
-        <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20vh' }}>
-          <div className="glass" style={{ padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-            <h2 style={{ marginBottom: '24px' }}>Admin Login</h2>
-            {error && <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>}
+        <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '10vh' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+            <h2 className="heading mb-8">Admin Login</h2>
+            {error && <div className="badge badge-danger mb-4" style={{ display: 'block', padding: '12px' }}>{error}</div>}
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);

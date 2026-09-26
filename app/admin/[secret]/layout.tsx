@@ -11,9 +11,8 @@ export default async function AdminLayout(props: { children: React.ReactNode, pa
   return (
     <AuthProvider>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <header className="glass" style={{ padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 600 }}>NACOS Admin</h1>
-          {/* We could put a logout button here inside a client component if needed, or rely on AuthContext */}
+        <header style={{ padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+          <h1 className="heading" style={{ fontSize: '20px', fontWeight: 600 }}>NACOS Admin</h1>
         </header>
         <main style={{ flex: 1, padding: '32px' }}>
           {children}

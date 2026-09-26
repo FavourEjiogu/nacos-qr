@@ -1,0 +1,49 @@
+
+> nacos-qr@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.255.255.254:3000
+- Environments: .env
+✓ Ready in 1247ms
+⚠ Warning: Next.js ignored package-lock.json in /home/mello because it is outside the current Git repository (/home/mello/nacos-qr).
+ To use this directory, set `turbopack.root` in your Next.js config.
+
+✓ Running next.config.mjs took 93ms
+
+ GET /admin/x7k9m2p3j8 404 in 3.9s (next.js: 2.3s, application-code: 1519ms)
+ GET /admin/admin_secret_local/create 200 in 2.9s (next.js: 2.3s, application-code: 646ms)
+ GET /api/admin/me 200 in 311ms (next.js: 193ms, application-code: 118ms)
+ GET /api/admin/me 200 in 47ms (next.js: 15ms, application-code: 31ms)
+ POST /api/admin/auth 200 in 5.2s (next.js: 514ms, application-code: 4.7s)
+ POST /api/admin/memos 200 in 1503ms (next.js: 211ms, application-code: 1292ms)
+ GET /admin/admin_secret_local/create 200 in 304ms (next.js: 53ms, application-code: 251ms)
+ GET /admin/x7k9m2p3j8 200 in 162ms (next.js: 52ms, application-code: 109ms)
+✓ Compiled in 1911ms
+ GET /admin/admin_secret_local/create 200 in 398ms (next.js: 62ms, application-code: 337ms)
+ GET /admin/x7k9m2p3j8 200 in 384ms (next.js: 207ms, application-code: 177ms)
+✓ Compiled in 28ms
+ GET /admin/admin_secret_local/create 200 in 221ms (next.js: 38ms, application-code: 183ms)
+ GET /admin/x7k9m2p3j8 200 in 215ms (next.js: 137ms, application-code: 78ms)
+ GET /admin/admin_secret_local/create 200 in 330ms (next.js: 35ms, application-code: 295ms)
+ GET /admin/x7k9m2p3j8 200 in 203ms (next.js: 63ms, application-code: 141ms)
+ GET /admin/x7k9m2p3j8 200 in 226ms (next.js: 34ms, application-code: 192ms)
+ GET /admin/admin_secret_local/create 200 in 215ms (next.js: 117ms, application-code: 98ms)
+✓ Compiled in 48ms
+ GET /admin/x7k9m2p3j8 200 in 213ms (next.js: 38ms, application-code: 175ms)
+ GET /admin/admin_secret_local/create 200 in 116ms (next.js: 39ms, application-code: 77ms)
+⚠ Fast Refresh had to perform a full reload when ./app/admin/[secret]/AuthContext.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 38ms
+ GET /admin/x7k9m2p3j8 200 in 421ms (next.js: 60ms, application-code: 361ms)
+ GET /admin/admin_secret_local/create 200 in 312ms (next.js: 45ms, application-code: 267ms)
+ GET /admin/admin_secret_local/create 200 in 308ms (next.js: 123ms, application-code: 185ms)
+ GET /api/admin/me 200 in 73ms (next.js: 26ms, application-code: 46ms)
+ GET /api/admin/me 200 in 50ms (next.js: 24ms, application-code: 26ms)
+ GET / 200 in 151ms (next.js: 31ms, application-code: 120ms)
+ GET /admin/mello/create 404 in 213ms (next.js: 31ms, application-code: 181ms)
+ GET /verify/unknown-id 200 in 2.0s (next.js: 1473ms, application-code: 555ms)
+ GET /admin/mello/create 404 in 228ms (next.js: 46ms, application-code: 183ms)
+ GET /admin/admin_secret_local/create 200 in 123ms (next.js: 27ms, application-code: 96ms)
+ GET /admin/x7k9m2p3j8 200 in 257ms (next.js: 53ms, application-code: 204ms)
+ GET /admin/admin_secret_local/create 200 in 139ms (next.js: 43ms, application-code: 96ms)

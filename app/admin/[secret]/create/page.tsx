@@ -81,31 +81,31 @@ export default function CreateMemo() {
     const verifyUrl = `${baseUrl}/verify/${successData.publicId}`;
     
     return (
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
-        <div style={{ padding: '40px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--background)', textAlign: 'center' }}>
-          <h2 style={{ color: 'var(--success)', fontSize: '28px', marginBottom: '24px', fontWeight: 700 }}>Memo Published</h2>
+      <div className="container" style={{ maxWidth: '800px' }}>
+        <div className="card" style={{ textAlign: 'center' }}>
+          <h2 className="heading" style={{ color: 'var(--success)', fontSize: '28px', marginBottom: '24px', fontWeight: 600 }}>MEMO PUBLISHED</h2>
           
-          <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '18px' }}>
-            <div><strong>Reference:</strong> {successData.serialNumber}</div>
-            <div><strong>Verification ID:</strong> {successData.publicId}</div>
-            <div style={{ wordBreak: 'break-all' }}><strong>Verification URL:</strong> {verifyUrl}</div>
+          <div className="mb-8" style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '16px' }}>
+            <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Reference:</span> <span className="mono font-medium">{successData.serialNumber}</span></div>
+            <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Verification ID:</span> <span className="mono font-medium">{successData.publicId}</span></div>
+            <div style={{ wordBreak: 'break-all' }}><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Verification URL:</span> <span className="font-medium">{verifyUrl}</span></div>
           </div>
 
-          <div style={{ background: '#fff', padding: '16px', display: 'inline-block', borderRadius: '8px', border: '1px solid #ccc', marginBottom: '32px' }}>
+          <div style={{ background: '#fff', padding: '16px', display: 'inline-block', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '32px' }}>
             <QRCodeSVG id={`qr-${successData.id}`} value={verifyUrl} size={200} level="H" />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <button onClick={() => downloadQRSVG(successData.id, successData.serialNumber)} style={{ background: 'var(--primary)', color: '#fff', padding: '12px 24px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            <button onClick={() => downloadQRSVG(successData.id, successData.serialNumber)} className="btn">
               Download QR
             </button>
-            <button onClick={() => { navigator.clipboard.writeText(verifyUrl); alert('URL copied'); }} style={{ background: 'var(--secondary)', border: '1px solid var(--border)', padding: '12px 24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
-              Copy Verification URL
+            <button onClick={() => { navigator.clipboard.writeText(verifyUrl); alert('URL copied'); }} className="btn btn-secondary">
+              Copy URL
             </button>
-            <a href={`/verify/${successData.publicId}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: 'var(--secondary)', border: '1px solid var(--border)', padding: '12px 24px', borderRadius: '4px', textDecoration: 'none', color: 'var(--foreground)', fontWeight: 600 }}>
-              Open Verification Page
+            <a href={`/verify/${successData.publicId}`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+              Open Page
             </a>
-            <Link href={`/admin/${secret}`} style={{ display: 'inline-block', background: 'transparent', border: '1px solid var(--border)', padding: '12px 24px', borderRadius: '4px', textDecoration: 'none', color: 'var(--foreground)', fontWeight: 600 }}>
+            <Link href={`/admin/${secret}`} className="btn btn-secondary">
               Back to Registry
             </Link>
           </div>
@@ -115,101 +115,102 @@ export default function CreateMemo() {
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 700 }}>
+    <div className="container" style={{ maxWidth: '800px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="mb-8">
+        <h2 className="heading" style={{ fontSize: '24px' }}>
           Create Official Memo
         </h2>
-        <Link href={`/admin/${secret}`} style={{ background: 'var(--secondary)', border: '1px solid var(--border)', padding: '8px 16px', borderRadius: '4px', textDecoration: 'none', color: 'var(--foreground)', fontWeight: 600 }}>
+        <Link href={`/admin/${secret}`} className="btn btn-secondary" style={{ padding: '8px 16px' }}>
           Back
         </Link>
       </div>
 
-      <div style={{ padding: '32px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--background)' }}>
-        {error && <div style={{ background: 'rgba(255,0,0,0.1)', color: 'var(--danger)', padding: '16px', borderRadius: '4px', marginBottom: '24px', fontWeight: 500 }}>{error}</div>}
+      <div className="card">
+        {error && <div className="badge badge-danger mb-4" style={{ display: 'block', padding: '16px', textAlign: 'center' }}>{error}</div>}
         
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <form onSubmit={handleSubmit}>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Title</label>
+            <label>Title</label>
             <input 
+              className="input"
               value={title} 
               onChange={e => setTitle(e.target.value)} 
               placeholder="e.g. Official Directive on Hackathon" 
               required 
-              style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', background: 'var(--background)', color: 'var(--foreground)' }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Official Text (Body)</label>
+            <label>Official Text (Body)</label>
             <textarea 
+              className="input"
               value={body} 
               onChange={e => setBody(e.target.value)} 
               placeholder="Enter the full authoritative text of the memo..." 
               required 
-              style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', minHeight: '200px', resize: 'vertical', background: 'var(--background)', color: 'var(--foreground)' }}
+              style={{ minHeight: '200px', resize: 'vertical' }}
             />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Issuer</label>
+              <label>Issuer</label>
               <input 
+                className="input"
                 value={issuer} 
                 onChange={e => setIssuer(e.target.value)} 
                 placeholder="e.g. Office of the President" 
                 required 
-                style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', background: 'var(--background)', color: 'var(--foreground)' }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Department</label>
+              <label>Department</label>
               <input 
+                className="input"
                 value={department} 
                 onChange={e => setDepartment(e.target.value)} 
                 placeholder="e.g. NACOS Bingham University" 
                 required 
-                style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', background: 'var(--background)', color: 'var(--foreground)' }}
               />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Date Issued</label>
+              <label>Date Issued</label>
               <input 
                 type="date"
+                className="input"
                 value={issuedAt} 
                 onChange={e => setIssuedAt(e.target.value)} 
                 required 
-                style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', background: 'var(--background)', color: 'var(--foreground)' }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Effective Date (Optional)</label>
+              <label>Effective Date (Optional)</label>
               <input 
                 type="date"
+                className="input"
                 value={effectiveFrom} 
                 onChange={e => setEffectiveFrom(e.target.value)} 
-                style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', background: 'var(--background)', color: 'var(--foreground)' }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Expiry Date (Optional)</label>
+              <label>Expiry Date (Optional)</label>
               <input 
                 type="date"
+                className="input"
                 value={expiresAt} 
                 onChange={e => setExpiresAt(e.target.value)} 
-                style={{ width: '100%', padding: '12px', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '16px', background: 'var(--background)', color: 'var(--foreground)' }}
               />
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '8px' }}>
-            <button type="submit" disabled={loading} style={{ width: '100%', padding: '16px', fontSize: '16px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
-              {loading ? 'Publishing...' : 'Publish Memo & Generate QR'}
-            </button>
-          </div>
+          <hr />
+          
+          <button type="submit" disabled={loading} className="btn" style={{ width: '100%', padding: '16px', fontSize: '16px' }}>
+            {loading ? 'Publishing...' : 'Publish Memo & Generate QR'}
+          </button>
         </form>
       </div>
     </div>

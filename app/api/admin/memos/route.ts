@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         const contentHash = generateMemoHash(memoData);
 
-        memo = await prisma.$transaction(async (tx) => {
+        memo = await prisma.$transaction(async (tx: any) => {
           const createdMemo = await tx.memo.create({
             data: {
               ...memoData,
@@ -88,7 +88,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, memo });
   } catch (error: any) {
     console.error('Error creating memo:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    const isDev = process.env.NODE_ENV !== 'production';
+    return NextResponse.json(
+      { 
+        error: 'Internal Server Error', 
+        details: isDev ? (error.message || String(error)) : undefined
+      }, 
+      { status: 500 }
+    );
   }
 }
 
