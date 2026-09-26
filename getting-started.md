@@ -1,83 +1,84 @@
-# Getting Started - NACOS Memo Verification System
+# NACOS QR - Getting Started Guide
 
-## Prerequisites
-- Node.js >= 18
-- npm
-- Docker (for local PostgreSQL database)
-- Vercel CLI (`npm i -g vercel`) for deployment
+Welcome to the NACOS QR repository. This document provides everything a human engineer needs to understand, set up, and run the project locally.
 
-## Local Development Setup
-1. Install dependencies:
+## 1. System Architecture
+
+NACOS QR is a cryptographic verification system that generates tamper-proof memos with scannable QR codes. 
+It uses Next.js (App Router), Prisma (with Neon PostgreSQL), and standard Web Cryptography (HMAC-SHA256).
+
+- **No PDF storage**: We store the authoritative text in the database and render it on the fly.
+- **No 3rd-party QR APIs**: QR codes are generated client-side using `qrcode.react`.
+- **Fail-closed security**: The system will crash or deny access if secrets are missing or tampered with.
+
+## 2. Environment Variables
+
+To run the system, you must define the following variables in a `.env` file at the root of the project. Do not use default or empty strings in production.
+
+```env
+# 1. Database Connection
+# Must be a PostgreSQL connection string. We strongly recommend Neon Serverless Postgres.
+# Example: postgresql://[user]:[password]@[host]:5432/[db]?sslmode=require
+DATABASE_URL="postgresql://user:password@hostname:5432/dbname"
+
+# 2. Administrative Authentication
+# The secret path used to access the admin portal (e.g., /admin/super-secret-path)
+ADMIN_ROUTE_SECRET="super-secret-path"
+# The password required to log in to the admin portal
+ADMIN_PASSWORD="your-strong-password"
+
+# 3. Cryptography & Integrity
+# Used to sign JWT session cookies
+AUTH_SECRET="generate-a-secure-random-string-here"
+# Used to generate HMAC-SHA256 hashes for memo integrity verification. 
+# WARNING: Changing this will invalidate all previously issued memos!
+HMAC_SECRET="generate-another-secure-random-string-here"
+
+# 4. Public URLs
+# The base URL of your deployed application, used for generating QR code links.
+# Example: https://verify.nacos.org
+NEXT_PUBLIC_VERIFY_BASE_URL="http://localhost:3000"
+```
+
+## 3. Local Setup
+
+1. **Install Node.js 18+**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
-
-2. Environment Variables:
-   Create a `.env` file in the root directory (or copy `.env.example`):
-   ```env
-   # Admin dashboard password
-   ADMIN_PASSWORD=your_secure_password
-   # Secret used to hide the admin route (e.g. yourdomain.com/admin/x7k9m2)
-   ADMIN_ROUTE_SECRET=x7k9m2
-   # Secret used for HMAC-SHA256 tampering detection
-   APP_SECRET=your_secure_random_string
-   # Local SQLite Database URL (for development)
-   DATABASE_URL="file:./dev.db"
-   ```
-
-3. Database Schema Setup:
+3. **Set up the Database:**
+   Create a Neon PostgreSQL project, retrieve the connection string, and add it to your `.env` file.
+4. **Push the schema:**
    ```bash
-   npx prisma generate
    npx prisma db push
    ```
-
-5. Start Development Server:
+   *Note: We use `db push` instead of `migrate dev` to rapidly prototype schema changes without managing migration files, but for production, consider `prisma migrate deploy`.*
+5. **Generate the Prisma client:**
    ```bash
-   npm run dev
+   npx prisma generate
    ```
 
-## Immediate Tasks to Execute
-- Open `http://localhost:3000/admin/x7k9m2` (using your `ADMIN_ROUTE_SECRET`) to test memo creation.
-- Check that the `NACOSBHU/YY/MM/XXXX` format generates correctly.
+## 4. Running Locally
 
----
+Start the development server:
+```bash
+npm run dev
+```
 
-## Vercel Deployment via CLI
+### Key Routes
+- **Public Landing Page**: `http://localhost:3000`
+- **Admin Dashboard**: `http://localhost:3000/admin/<ADMIN_ROUTE_SECRET>`
+- **Public Verification Page**: `http://localhost:3000/verify/<PUBLIC_ID>`
 
-To deploy this project to Vercel and provision a free Postgres database using the command line:
+## 5. Deployment Checklist
 
-1. **Switch Database Provider:**
-   Before deploying, open `prisma/schema.prisma` and change `provider = "sqlite"` to `provider = "postgresql"`.
+Before deploying to production (e.g., Vercel):
+1. **Rotate Secrets**: Ensure `AUTH_SECRET`, `HMAC_SECRET`, and `ADMIN_PASSWORD` are strong, cryptographically random strings.
+2. **Set NEXT_PUBLIC_VERIFY_BASE_URL**: This must be your actual production domain, otherwise QR codes will point to `localhost`.
+3. **Database Connection Limits**: If using Neon, ensure you use the pooled connection string (usually ending with `-pooler.tech`) to avoid exhausting connections in a serverless environment.
 
-2. Log in to Vercel:
-   ```bash
-   vercel login
-   ```
-
-3. Link your local directory to a Vercel project:
-   ```bash
-   vercel link
-   ```
-   *(Follow the prompts to set up the project)*
-
-4. Add a Vercel Postgres database to your project:
-   ```bash
-   vercel env add POSTGRES
-   # (Alternatively, you can add it via the Vercel Dashboard -> Storage -> Postgres, then run vercel env pull)
-   ```
-
-5. Add your custom environment variables to Vercel:
-   ```bash
-   vercel env add ADMIN_PASSWORD
-   vercel env add ADMIN_ROUTE_SECRET
-   vercel env add APP_SECRET
-   ```
-
-6. Deploy to production:
-   ```bash
-   vercel --prod
-   ```
-
-## Tech Stack Note
-- Do not use Tailwind CSS unless explicitly requested.
-- Use Vanilla CSS modules for styling.
+## 6. Security Principles
+- Do not commit `.env` or any secrets to version control.
+- If a memo's integrity hash fails during verification, the system will flag it as "Verification Failed". This means the database record was manually altered or tampered with.
+- "Revocation" is permanent. A revoked memo retains its historical hash but displays a "Revoked" warning to the public.

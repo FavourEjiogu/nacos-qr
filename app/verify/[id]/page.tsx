@@ -1,135 +1,154 @@
 import { prisma } from '@/lib/prisma';
-import { generateMemoHash } from '@/lib/crypto';
-import { AlertTriangle, ShieldCheck, User, Building, CalendarClock } from 'lucide-react';
+import { verifyMemoHash } from '@/lib/crypto';
+import { redirect } from 'next/navigation';
 
-export const revalidate = 60; // Cache this page for 60 seconds to easily support 1k+ concurrent DAU without DB strain
+export const revalidate = 60; // Cache this page for 60 seconds
 
 export default async function VerifyPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const decodedId = decodeURIComponent(params.id).trim();
+
+  // If it contains a slash, it's a serial number. Redirect to canonical publicId URL.
+  if (decodedId.includes('/')) {
+    const memoBySerial = await prisma.memo.findUnique({
+      where: { serialNumber: decodedId }
+    });
+    if (memoBySerial) {
+      redirect(`/verify/${memoBySerial.publicId}`);
+    }
+  }
+
   const memo = await prisma.memo.findUnique({
-    where: { publicId: params.id },
+    where: { publicId: decodedId },
     include: { links: true }
   });
 
   if (!memo) {
     return (
-      <div className="container" style={{ textAlign: 'center', marginTop: '15vh' }}>
-        <AlertTriangle size={80} color="var(--danger)" style={{ marginBottom: '24px' }} />
-        <h1 style={{ fontSize: '32px', marginBottom: '16px', color: 'var(--danger)' }}>Record Not Found</h1>
-        <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>NACOS could not verify this reference. Do not rely on this document as official communication.</p>
+      <div style={{ textAlign: 'center', marginTop: '15vh', padding: '24px' }}>
+        <h1 style={{ fontSize: '32px', marginBottom: '16px', color: 'var(--danger)' }}>RECORD NOT FOUND</h1>
+        <p style={{ opacity: 0.7, fontSize: '18px' }}>No matching verification record exists.</p>
       </div>
     );
   }
 
-  const expectedHash = generateMemoHash({
-    publicId: memo.publicId,
-    serialNumber: memo.serialNumber,
-    title: memo.title,
-    body: memo.body,
-    issuer: memo.issuer,
-    department: memo.department,
-    issuedAt: memo.issuedAt,
-    effectiveFrom: memo.effectiveFrom,
-  });
+  // Derive expired state dynamically
+  let derivedStatus = memo.status;
+  if (memo.status === 'ACTIVE' && memo.expiresAt && new Date(memo.expiresAt) < new Date()) {
+    derivedStatus = 'EXPIRED';
+  }
 
-  const isTampered = expectedHash !== memo.contentHash;
+  const isTampered = !verifyMemoHash(memo, memo.contentHash);
   const isRevoked = memo.status === 'REVOKED';
-  const isSuperseded = memo.status === 'SUPERSEDED';
-  const isExpired = memo.status === 'EXPIRED';
+  const isExpired = derivedStatus === 'EXPIRED';
 
-  const isWarning = isSuperseded || isExpired;
+  const isWarning = isExpired;
   const isDanger = isRevoked || isTampered;
   
   return (
-    <div className="container">
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '24px' }}>
         {isRevoked ? (
           <>
-            <AlertTriangle size={80} color="var(--danger)" style={{ marginBottom: '20px' }} />
-            <h1 style={{ color: 'var(--danger)', fontSize: '36px', marginBottom: '12px' }}>Memo Revoked</h1>
-            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This memo was genuinely issued but has subsequently been withdrawn.</p>
+            <h1 style={{ color: 'var(--danger)', fontSize: '28px', marginBottom: '12px', fontWeight: 700 }}>MEMO REVOKED</h1>
+            <p style={{ opacity: 0.8, fontSize: '16px' }}>The record was issued by NACOS but has subsequently been withdrawn.</p>
             {memo.revocationReason && (
-              <div style={{ marginTop: '24px', display: 'inline-block' }}>
-                <div className="badge badge-danger">Revocation Reason</div>
-                <p style={{ marginTop: '8px', fontWeight: 500, color: 'var(--danger)' }}>{memo.revocationReason}</p>
+              <div style={{ marginTop: '16px', color: 'var(--danger)', fontWeight: 600 }}>
+                Reason: {memo.revocationReason}
               </div>
             )}
           </>
         ) : isTampered ? (
           <>
-            <AlertTriangle size={80} color="var(--danger)" style={{ marginBottom: '20px' }} />
-            <h1 style={{ color: 'var(--danger)', fontSize: '36px', marginBottom: '12px' }}>Verification Failed</h1>
-            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This memo has been tampered with. The verification signature does not match.</p>
+            <h1 style={{ color: 'var(--danger)', fontSize: '28px', marginBottom: '12px', fontWeight: 700 }}>VERIFICATION FAILED</h1>
+            <p style={{ opacity: 0.8, fontSize: '16px' }}>The stored record failed integrity validation.</p>
           </>
-        ) : isWarning ? (
+        ) : isExpired ? (
            <>
-            <AlertTriangle size={80} color="var(--warning)" style={{ marginBottom: '20px' }} />
-            <h1 style={{ color: 'var(--warning)', fontSize: '36px', marginBottom: '12px' }}>{isSuperseded ? 'Superseded' : 'Expired'}</h1>
-            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This memo is authentic but is no longer the current instruction.</p>
+            <h1 style={{ color: 'var(--warning)', fontSize: '28px', marginBottom: '12px', fontWeight: 700 }}>VERIFIED — EXPIRED</h1>
+            <p style={{ opacity: 0.8, fontSize: '16px' }}>The record exists and the integrity check passes, but its expiration date has passed.</p>
           </>
         ) : (
           <>
-            <ShieldCheck size={80} color="var(--success)" style={{ marginBottom: '20px' }} />
-            <h1 style={{ color: 'var(--success)', fontSize: '36px', marginBottom: '12px' }}>Verified — Active</h1>
-            <p style={{ color: 'var(--foreground)', opacity: 0.7, fontSize: '18px' }}>This record matches an official memo issued by NACOS.</p>
+            <h1 style={{ color: 'var(--success)', fontSize: '28px', marginBottom: '12px', fontWeight: 700 }}>VERIFIED — ACTIVE</h1>
+            <p style={{ opacity: 0.8, fontSize: '16px' }}>This memo matches an official NACOS record.</p>
           </>
         )}
       </div>
 
-      <div className="glass" style={{ padding: '40px', borderRadius: '32px', opacity: (isDanger || isWarning) ? 0.8 : 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px', borderBottom: '1px solid var(--border)', paddingBottom: '32px' }}>
-          <div style={{ fontSize: '13px', color: 'var(--foreground)', opacity: 0.5, marginBottom: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: 600 }}>Official Reference</div>
-          <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '1px', marginBottom: '8px' }}>{memo.serialNumber}</div>
-          <div style={{ fontSize: '14px', fontFamily: 'monospace', color: 'var(--foreground)', opacity: 0.6 }}>Memo ID: {memo.publicId}</div>
+      <div style={{ 
+        padding: '32px', 
+        borderRadius: '8px', 
+        border: '1px solid var(--border)', 
+        background: 'var(--background)',
+        opacity: (isDanger || isWarning) ? 0.9 : 1 
+      }}>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, fontWeight: 600 }}>Reference</div>
+          <div style={{ fontSize: '18px', fontWeight: 600 }}>{memo.serialNumber}</div>
         </div>
-
-        <h2 style={{ fontSize: '28px', marginBottom: '24px', lineHeight: 1.25, fontWeight: 700 }}>{memo.title}</h2>
-        {memo.summary && <p style={{ fontSize: '18px', color: 'var(--foreground)', opacity: 0.7, marginBottom: '32px', lineHeight: 1.6 }}>{memo.summary}</p>}
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px', color: 'var(--foreground)', fontSize: '15px' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--secondary)', padding: '16px', borderRadius: '16px' }}>
-            <CalendarClock size={20} style={{ opacity: 0.5 }} />
-            <div>
-              <div style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>Issued</div>
-              <div style={{ fontWeight: 500 }}>{new Date(memo.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            </div>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, fontWeight: 600 }}>Verification ID</div>
+          <div style={{ fontSize: '18px', fontWeight: 600 }}>{memo.publicId}</div>
+        </div>
+
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, fontWeight: 600 }}>Title</div>
+          <div style={{ fontSize: '20px', fontWeight: 700 }}>{memo.title}</div>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
+          <div>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, fontWeight: 600 }}>Issued</div>
+            <div style={{ fontWeight: 500 }}>{new Date(memo.issuedAt).toLocaleDateString()}</div>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--secondary)', padding: '16px', borderRadius: '16px' }}>
-            <User size={20} style={{ opacity: 0.5 }} />
-            <div>
-              <div style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>Issuer</div>
-              <div style={{ fontWeight: 500 }}>{memo.issuer}</div>
-            </div>
+          <div>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, fontWeight: 600 }}>Issuer</div>
+            <div style={{ fontWeight: 500 }}>{memo.issuer}</div>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--secondary)', padding: '16px', borderRadius: '16px' }}>
-            <Building size={20} style={{ opacity: 0.5 }} />
-            <div>
-              <div style={{ fontSize: '12px', opacity: 0.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: '2px' }}>Department</div>
-              <div style={{ fontWeight: 500 }}>{memo.department}</div>
-            </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, fontWeight: 600 }}>Department</div>
+            <div style={{ fontWeight: 500 }}>{memo.department}</div>
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '40px 0', marginBottom: '40px' }}>
-          <div style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--foreground)', opacity: 0.4, marginBottom: '24px', textAlign: 'center', fontWeight: 600 }}>Document Content</div>
-          <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, fontSize: '17px', color: 'var(--foreground)' }}>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '32px', marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '14px', textTransform: 'uppercase', opacity: 0.6, marginBottom: '16px', fontWeight: 600 }}>Official Memo</h3>
+          <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, fontSize: '16px' }}>
             {memo.body}
           </div>
         </div>
 
         {memo.links && memo.links.length > 0 && (
-          <div style={{ background: 'var(--secondary)', padding: '24px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-            <h3 style={{ fontSize: '17px', fontWeight: 600 }}>Additional Resources</h3>
-            {memo.links.map((link: { id: string, label: string, url: string }) => (
-              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontWeight: 500 }}>
-                {link.label} ↗
-              </a>
-            ))}
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', opacity: 0.6, marginBottom: '12px', fontWeight: 600 }}>Links</h3>
+            <ul style={{ paddingLeft: '20px' }}>
+              {memo.links.map((link: { id: string, label: string, url: string }) => (
+                <li key={link.id} style={{ marginBottom: '8px' }}>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         
-        <div style={{ textAlign: 'center', background: 'var(--secondary)', padding: '20px', borderRadius: '16px', fontSize: '15px', color: 'var(--foreground)', opacity: 0.8, fontWeight: 500 }}>
-          Compare the title, reference number, date and contents shown here with the document you received. If they differ, the document has been altered.
+        <div style={{ 
+          borderTop: '1px solid var(--border)', 
+          paddingTop: '24px', 
+          fontSize: '14px', 
+          fontWeight: 600,
+          background: 'rgba(0,0,0,0.02)',
+          padding: '16px',
+          borderRadius: '8px'
+        }}>
+          <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>Compare with your document</h3>
+          <p style={{ opacity: 0.8, lineHeight: 1.5 }}>
+            Confirm that the title, reference number, date, issuer and contents shown here match the document you received. 
+            If any important detail differs, do not rely on the document and contact NACOS.
+          </p>
         </div>
       </div>
     </div>

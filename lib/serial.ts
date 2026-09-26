@@ -5,29 +5,20 @@ export async function generateSerialNumber(): Promise<string> {
   const date = new Date();
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yearMonth = `${yy}${mm}`;
   const prefix = `NACOSBHU/${yy}/${mm}/`;
 
-  // We need to find the latest serial for this month to increment
-  // This uses a naive approach for sqlite; in production Postgres, a sequence or row lock is better.
-  const latestMemo = await prisma.memo.findFirst({
-    where: {
-      serialNumber: {
-        startsWith: prefix,
-      },
+  const counter = await prisma.serialCounter.upsert({
+    where: { yearMonth },
+    update: {
+      lastValue: { increment: 1 }
     },
-    orderBy: {
-      serialNumber: 'desc',
-    },
+    create: {
+      yearMonth,
+      lastValue: 1
+    }
   });
 
-  let nextNumber = 1;
-  if (latestMemo) {
-    const lastPart = latestMemo.serialNumber.split('/').pop();
-    if (lastPart) {
-      nextNumber = parseInt(lastPart, 10) + 1;
-    }
-  }
-
-  const formattedNumber = String(nextNumber).padStart(4, '0');
+  const formattedNumber = String(counter.lastValue).padStart(4, '0');
   return `${prefix}${formattedNumber}`;
 }

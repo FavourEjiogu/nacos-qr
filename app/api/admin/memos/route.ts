@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateSerialNumber } from '@/lib/serial';
-import { generateMemoHash } from '@/lib/crypto';
+import { generateMemoHash, generatePublicId } from '@/lib/crypto';
 import { isAuthenticated } from '@/lib/auth';
-import { nanoid } from 'nanoid';
 
 export async function POST(req: NextRequest) {
   if (!(await isAuthenticated(req))) {
@@ -25,41 +24,53 @@ export async function POST(req: NextRequest) {
     while (attempts < MAX_ATTEMPTS) {
       try {
         const serialNumber = await generateSerialNumber();
-        const publicId = nanoid(8).toUpperCase(); // e.g. 7Y2KF94Q
+        const publicId = generatePublicId(8);
         
-        const contentHash = generateMemoHash({
+        const parsedIssuedAt = new Date(issuedAt);
+        const parsedEffectiveFrom = new Date(effectiveFrom);
+        const parsedExpiresAt = expiresAt ? new Date(expiresAt) : null;
+        
+        const memoData = {
           publicId,
           serialNumber,
           title,
           body: memoBody,
           issuer,
           department,
-          issuedAt,
-          effectiveFrom,
+          issuedAt: parsedIssuedAt,
+          effectiveFrom: parsedEffectiveFrom,
+          expiresAt: parsedExpiresAt,
+          status: 'ACTIVE',
+          links: links && links.length > 0 ? links : undefined
+        };
+
+        const contentHash = generateMemoHash(memoData);
+
+        memo = await prisma.$transaction(async (tx) => {
+          const createdMemo = await tx.memo.create({
+            data: {
+              ...memoData,
+              summary,
+              contentHash,
+              links: memoData.links ? {
+                create: memoData.links.map((link: {label: string, url: string}) => ({
+                  label: link.label,
+                  url: link.url
+                }))
+              } : undefined
+            }
+          });
+
+          await tx.auditLog.create({
+            data: {
+              action: 'MEMO_CREATED',
+              memoId: createdMemo.id,
+            }
+          });
+
+          return createdMemo;
         });
 
-        memo = await prisma.memo.create({
-          data: {
-            publicId,
-            serialNumber,
-            title,
-            summary,
-            body: memoBody,
-            issuer,
-            department,
-            issuedAt: new Date(issuedAt),
-            effectiveFrom: new Date(effectiveFrom),
-            expiresAt: expiresAt ? new Date(expiresAt) : null,
-            contentHash,
-            status: 'PUBLISHED', // Direct publish for now, can implement Draft later
-            links: links && links.length > 0 ? {
-              create: links.map((link: {label: string, url: string}) => ({
-                label: link.label,
-                url: link.url
-              }))
-            } : undefined
-          }
-        });
         break; 
       } catch (err: any) {
         if (err.code === 'P2002') {
@@ -73,13 +84,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!memo) throw new Error('Failed to create memo.');
-
-    await prisma.auditLog.create({
-      data: {
-        action: 'MEMO_CREATED',
-        memoId: memo.id,
-      }
-    });
 
     return NextResponse.json({ success: true, memo });
   } catch (error: any) {

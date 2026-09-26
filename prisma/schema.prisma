@@ -17,7 +17,7 @@ model Memo {
   issuedAt         DateTime
   effectiveFrom    DateTime
   expiresAt        DateTime?
-  status           String   @default("DRAFT") // DRAFT, ACTIVE, SUPERSEDED, REVOKED, EXPIRED
+  status           String   @default("ACTIVE")
   issuer           String
   department       String
   contentHash      String
@@ -27,7 +27,6 @@ model Memo {
   revocationReason String?
   
   links            MemoLink[]
-  attachments      MemoAttachment[]
   auditLogs        AuditLog[]
 }
 
@@ -39,18 +38,8 @@ model MemoLink {
   memo    Memo   @relation(fields: [memoId], references: [id], onDelete: Cascade)
 }
 
-model MemoAttachment {
-  id      String @id @default(uuid())
-  title   String
-  url     String
-  type    String
-  memoId  String
-  memo    Memo   @relation(fields: [memoId], references: [id], onDelete: Cascade)
-}
-
 model SerialCounter {
-  id        String @id @default("nacos-serial")
-  yearMonth String 
+  yearMonth String @id
   lastValue Int    @default(0)
 }
 
