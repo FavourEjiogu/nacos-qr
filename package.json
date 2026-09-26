@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
+    "@neon/config": "^1.8.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22",
     "@types/react": "^18",
