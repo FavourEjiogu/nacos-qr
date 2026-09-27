@@ -44,7 +44,9 @@ describe('System Critical Logic', () => {
       title: 'Test Memo',
       body: 'This is a test.',
       issuer: 'Test',
-      department: 'Test Dept',
+      issuerPhone: '123456789',
+      addressedTo: 'All NACOSites',
+      documentType: 'Internal Memorandum',
       issuedAt: new Date('2026-09-26T00:00:00Z'),
       effectiveFrom: new Date('2026-09-26T00:00:00Z'),
       expiresAt: new Date('2027-09-26T00:00:00Z'),
@@ -61,7 +63,9 @@ describe('System Critical Logic', () => {
         publicId: '7Y2KF94Q',
         serialNumber: 'NACOSBHU/26/09/0001',
         issuer: 'Test',
-        department: 'Test Dept',
+        issuerPhone: '123456789',
+        addressedTo: 'All NACOSites',
+        documentType: 'Internal Memorandum',
         issuedAt: new Date('2026-09-26T00:00:00Z'),
         effectiveFrom: new Date('2026-09-26T00:00:00Z'),
         expiresAt: new Date('2027-09-26T00:00:00Z'),
@@ -72,7 +76,7 @@ describe('System Critical Logic', () => {
       expect(verifyMemoHash(baseMemo, hash1)).toBe(true);
     });
 
-    it('changing fields invalidates hash', () => {
+    it('changing authoritative fields invalidates hash', () => {
       const baseHash = generateMemoHash(baseMemo);
 
       const checkTamper = (modifier: any) => {
@@ -85,12 +89,21 @@ describe('System Critical Logic', () => {
       checkTamper({ title: 'Tampered Title' });
       checkTamper({ body: 'Tampered Body' });
       checkTamper({ issuer: 'Tampered Issuer' });
-      checkTamper({ department: 'Tampered Dept' });
+      checkTamper({ issuerPhone: '987654321' });
+      checkTamper({ addressedTo: 'Tampered AddressedTo' });
+      checkTamper({ documentType: 'Tampered DocType' });
       checkTamper({ issuedAt: new Date('2026-09-27T00:00:00Z') });
       checkTamper({ effectiveFrom: new Date('2026-09-27T00:00:00Z') });
       checkTamper({ expiresAt: new Date('2027-09-27T00:00:00Z') });
       checkTamper({ links: [{ label: 'Link', url: 'http://tampered.com' }] });
-      checkTamper({ status: 'REVOKED' }); // status handling matches documented model
+    });
+
+    it('changing mutable operational status does NOT invalidate content hash', () => {
+      const baseHash = generateMemoHash(baseMemo);
+      const revokedMemo = { ...baseMemo, status: 'REVOKED' };
+      
+      // Verification should still pass on the original baseHash
+      expect(verifyMemoHash(revokedMemo, baseHash)).toBe(true);
     });
   });
 
@@ -155,7 +168,9 @@ describe('System Critical Logic', () => {
           summary: 'Testing',
           body: 'Content for the integration test.',
           issuer: 'Tester',
-          department: 'QA',
+          documentType: 'Internal Memorandum',
+          addressedTo: 'All NACOSites',
+          issuerPhone: '+2348000000000',
           issuedAt: new Date().toISOString(),
           effectiveFrom: new Date().toISOString()
         })
