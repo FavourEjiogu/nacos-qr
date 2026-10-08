@@ -1,110 +1,113 @@
-# NACOS QR - Getting Started Guide
+# NACOS QR — Getting Started
 
-Welcome to the NACOS QR repository. This document provides everything an engineer needs to understand, set up, deploy, and manage the system.
+## 1. Architecture
 
-## 1. System Architecture
+NACOS QR is a small Next.js/Prisma/Neon application for official NACOS memo verification.
 
-NACOS QR is a cryptographic verification system that generates tamper-proof memos with scannable QR codes. 
-It uses Next.js (App Router), Prisma (with Neon PostgreSQL), and standard Web Cryptography (HMAC-SHA256).
+- Authoritative memo text is stored in PostgreSQL.
+- QR codes point to a canonical public verification URL.
+- QR codes are generated in the application; no external QR service is required.
+- HMAC-SHA256 protects the integrity of authoritative memo content.
+- Revocation is operational state and is intentionally separate from the content signature.
+- Public verification requires no account.
+- Administrative operations require an authenticated session.
 
-- **No PDF storage**: We store the authoritative text in the database and render it on the fly.
-- **No 3rd-party QR APIs**: QR codes are generated client-side using `qrcode.react`.
-- **Fail-closed security**: The system will crash or deny access if secrets are missing or tampered with.
+## 2. Environment variables
 
-## 2. Environment Variables & Secrets
-
-To run the system, you must define the following variables in a `.env` file at the root of the project. Do not use default or empty strings in production.
+Create `.env` locally. Never commit it.
 
 ```env
-# 1. Database Connection
-# Connection strings for Neon Serverless Postgres.
-# DATABASE_URL should be the pooled connection. DATABASE_URL_UNPOOLED is required for Prisma migrations.
-DATABASE_URL="postgresql://[user]:[password]@[host]:5432/[db]?sslmode=require&pgbouncer=true"
-DATABASE_URL_UNPOOLED="postgresql://[user]:[password]@[host]:5432/[db]?sslmode=require"
+DATABASE_URL="postgresql://..."
+DATABASE_URL_UNPOOLED="postgresql://..."
 
-# 2. Administrative Security
-# The secret path used to access the admin portal (e.g., if set to "secure-123", the route is /admin/secure-123)
-ADMIN_ROUTE_SECRET="super-secret-path"
-# The bcrypt hash of the admin password. Generate this using the provided script (see below).
-ADMIN_PASSWORD_HASH="$2a$10$YourBcryptHashGoesHere..."
+ADMIN_ROUTE_SECRET="use-a-long-random-value"
+ADMIN_PASSWORD_HASH="bcrypt-hash-of-your-admin-password"
 
-# 3. Cryptography & Integrity
-# Used to sign JWT session cookies for admin auth. Must be cryptographically secure.
-AUTH_SECRET="generate-a-secure-random-string-here"
-# Used to generate HMAC-SHA256 hashes for memo integrity verification. 
-# WARNING: Changing this will invalidate all previously issued memos!
-APP_SECRET="generate-another-secure-random-string-here"
+AUTH_SECRET="long-random-secret"
+APP_SECRET="long-random-secret"
 
-# 4. Public URLs
-# The base URL of your deployed application, used for generating QR code links.
 NEXT_PUBLIC_VERIFY_BASE_URL="http://localhost:3000"
 ```
 
-## 3. Local Setup
+Generate a bcrypt password hash with the project's installed `bcryptjs` package:
 
-1. **Install Node.js 18+ (20+ Recommended)**
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-3. **Generate your Admin Password Hash:**
-   Run the following command to hash your desired password securely using bcrypt:
-   ```bash
-   node -e "require('bcryptjs').hash('your-new-password', 10).then(console.log)"
-   ```
-   *Copy the output and set it as `ADMIN_PASSWORD_HASH` in your `.env` file.*
-4. **Push the schema to Neon:**
-   ```bash
-   npx prisma db push
-   ```
-   *Note: We use `db push` for rapid schema synchronization during development.*
-5. **Generate the Prisma client:**
-   ```bash
-   npx prisma generate
-   ```
-
-## 4. Running Locally
-
-Start the development server:
 ```bash
+node -e "require('bcryptjs').hash(process.argv[1], 12).then(console.log)" "replace-with-your-password"
+```
+
+Do not paste real production secrets into source control, issue trackers, or documentation.
+
+## 3. Local setup
+
+```bash
+npm install
+npx prisma generate
 npm run dev
 ```
 
-### Key Routes
-- **Public Landing Page**: `http://localhost:3000`
-- **Admin Dashboard**: `http://localhost:3000/admin/<ADMIN_ROUTE_SECRET>`
-- **Public Verification Page**: `http://localhost:3000/verify/<PUBLIC_ID>`
+If the database schema needs to be synchronized in a development environment, use the project's existing Neon/Prisma workflow. Do not reset or recreate the production database to fix an application-code problem.
 
-## 5. How to Manage Admin Credentials
+## 4. Verification commands
 
-**Changing the Admin Route Path:**
-Simply change `ADMIN_ROUTE_SECRET` in your `.env` (or Vercel dashboard). The admin portal will instantly move to `/admin/<YOUR_NEW_SECRET>`. The old route will return a 404.
+Run the actual release checks before shipping:
 
-**Changing the Admin Password:**
-1. Generate a new bcrypt hash: `node -e "require('bcryptjs').hash('new-password', 10).then(console.log)"`
-2. Update the `ADMIN_PASSWORD_HASH` environment variable.
-3. Restart the server (or trigger a redeploy on Vercel). Active sessions will remain until they expire, but new logins will require the new password.
+```bash
+npm run lint
+npm test
+npm run build
+```
 
-## 6. Deployment: What's left? (Vercel + Neon Guide)
+A successful Vercel build proves that the production build completed. It does not replace runtime smoke testing.
 
-The application code is fully complete and production-ready. The final step is deployment to Vercel and connecting it to your Neon database.
+## 5. Routes
 
-### Step-by-step Vercel Deployment:
-1. **Push to GitHub**: Ensure all code is committed and pushed to your GitHub repository.
-2. **Import to Vercel**: Log in to Vercel and click "Add New... Project". Select this GitHub repository.
-3. **Configure Environment Variables**:
-   In the Vercel deployment settings, add ALL the variables from your `.env` file.
-   - Use Neon's **Pooled Connection String** for `DATABASE_URL`.
-   - Use Neon's **Direct Connection String** for `DATABASE_URL_UNPOOLED`.
-   - Set `NEXT_PUBLIC_VERIFY_BASE_URL` to your production domain (e.g., `https://qr.nacos.org.ng`).
-4. **Deploy**: Click Deploy. Vercel will automatically run `npm run build`. Note: Ensure you have `"postinstall": "prisma generate"` in your `package.json` if it isn't there already, so Prisma client is generated on Vercel.
-5. **Set up Custom Domain** (Optional): In Vercel Project Settings > Domains, add your custom domain. Update `NEXT_PUBLIC_VERIFY_BASE_URL` to match this domain.
+- Public home: `/`
+- Public verification: `/verify/<PUBLIC_ID>`
+- Admin portal: `/admin/<ADMIN_ROUTE_SECRET>`
 
-## 7. Security Architecture & Threat Model
+The admin route is an additional discovery barrier, not an authorization mechanism. Authentication and authorization are enforced server-side.
 
-- **No Secrets in Source Control:** `.env` is explicitly ignored.
-- **Fail-closed Integrity Validation:** If a memo's integrity hash fails during verification, the system flags it as "Verification Failed". This means the database record was manually altered or tampered with.
-- **Revocations are Immutable:** "Revocation" is permanent. A revoked memo retains its historical hash but displays a "Revoked" warning to the public.
-- **Admin CSRF Protection:** Admin cookie uses `SameSite: strict` to prevent CSRF attacks.
-- **Payload Limits:** Incoming payloads are restricted to prevent memory exhaustion DoS attacks.
-- **IP Spoofing Awareness:** The rate limiter relies on `X-Forwarded-For`. Because this app is designed to be hosted on Vercel, this header is securely set by the platform and cannot be spoofed by external attackers. (See `couldgowrong.md` for more details).
+## 6. Production deployment
+
+The GitHub repository is connected to Vercel and `master` is the production branch.
+
+Before production release:
+
+1. Confirm all required Production environment variables exist.
+2. Confirm `NEXT_PUBLIC_VERIFY_BASE_URL` is the canonical public domain.
+3. Run lint, tests, and build.
+4. Deploy the exact reviewed commit.
+5. Verify the deployment reaches `READY`.
+6. Smoke-test public verification and admin authentication.
+7. Create a test memo only if using an intentionally controlled test record; never invent production records merely for demonstration.
+
+## 7. Integrity and lifecycle rules
+
+The HMAC covers the authoritative memo fields, including:
+
+- public ID
+- serial number
+- title
+- body
+- issuer
+- issuer contact
+- addressed-to
+- document type
+- issue/effective/expiry dates
+- official links
+
+Revocation status is not included in the content signature. A revoked memo should therefore still have a valid historical content signature while displaying its revoked state.
+
+Changing `APP_SECRET` invalidates signatures created with the old secret. Treat the secret as long-lived production key material.
+
+## 8. Security notes
+
+- Never trust browser-supplied authorization state.
+- Never expose `AUTH_SECRET`, `APP_SECRET`, password hashes, database credentials, or admin credentials to the client.
+- Keep production secrets in Vercel's encrypted/sensitive environment storage.
+- Do not commit helper scripts containing credentials or destructive Git automation.
+- Do not claim that cryptographic verification proves the physical document itself was never altered; it proves the authoritative record's integrity.
+
+## 9. Current production status
+
+The production Vercel project is connected to this GitHub repository. Check the Vercel deployment state and runtime logs before declaring a release healthy.
