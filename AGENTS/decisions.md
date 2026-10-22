@@ -6,7 +6,7 @@
 **Reason:** Existing app logic relies on Prisma transactions for atomic memo creation + audit logging, serial counters, and relational memo links. A backend rewrite during an urgent issuance workflow would increase risk.
 
 ## ADR-002 — Use Supavisor pooler strings on Vercel
-**Decision:** Use the exact Supabase transaction pooler connection string for `DATABASE_URL` and session pooler string for `DATABASE_URL_UNPOOLED`.
+**Decision:** Use the exact Supabase transaction pooler connection string for `SUPABASE_DATABASE_URL` and session pooler string for `SUPABASE_DATABASE_URL_UNPOOLED`; preserve Neon-managed `DATABASE_URL` variables as fallback.
 
 **Reason:** Vercel serverless runtime does not support direct IPv6 database connections in the default environment. Pooler hosts vary and must be copied from Supabase Connect; do not synthesize them.
 
