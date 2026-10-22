@@ -12,7 +12,7 @@ NACOS QR is the official NACOS document-verification system. Administrators crea
 - Sequential NACOS reference numbers
 - Document type, addressed-to, issuer, issuer contact, dates, and official links
 - Audit logging for administrative actions
-- Neon PostgreSQL via Prisma
+- Supabase PostgreSQL via Prisma (private server-side connection; RLS enabled on all application tables)
 - Next.js App Router with a deliberately small dependency footprint
 
 ## Security model
@@ -30,7 +30,7 @@ Administrative authentication uses a bcrypt password hash, signed HttpOnly sessi
 - Next.js 16 / App Router
 - React 18
 - Prisma 5
-- Neon PostgreSQL
+- Supabase PostgreSQL
 - Node.js crypto / HMAC-SHA256
 - `qrcode.react`
 - Vanilla CSS
