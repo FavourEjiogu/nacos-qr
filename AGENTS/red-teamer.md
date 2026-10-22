@@ -11,8 +11,8 @@
 ### MEDIUM — Database credentials and trust boundary
 - **Attack:** Exposing database credentials or granting table-wide REST access would allow direct access outside the custom admin flow.
 - **Impact:** Unauthorized reads/writes to authoritative memo and audit records.
-- **Remediation:** Keep credentials server-only; RLS is enabled and public roles have no table privileges. Do not add public policies for direct table access.
-- **Status:** Baseline applied; production connection configuration pending.
+- **Remediation:** Keep credentials server-only; RLS is enabled; only the server-side `nacos_app` role has table policies, while public roles have no table privileges. Do not add public policies for direct table access.
+- **Status:** Baseline applied; `nacos_app` password and production connection configuration pending.
 
 ### LOW/INFO — RLS has no policies
 - **Observation:** Supabase advisor flags all five tables for RLS enabled without policies.
