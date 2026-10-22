@@ -14,9 +14,9 @@ Official NACOS memo-verification system. Administrators issue authoritative memo
 ## Database boundaries
 - Supabase application tables are in `public`.
 - RLS is enabled on all application tables.
-- No Data API policies are intentionally defined for `anon` or `authenticated`; public verification is mediated by the Next.js server.
+- RLS policies grant runtime access only to the `nacos_app` database role; `anon` and `authenticated` have no table privileges. Public verification is mediated by the Next.js server.
 - Do not add browser-side database credentials or expose a service-role/secret key.
-- The app uses `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED`; the existing Neon-managed `DATABASE_URL` variables remain untouched as a fallback. Supabase's exact transaction/session pooler hosts must be copied from the Connect dialog; never guess the pooler hostname.
+- The app uses `SUPABASE_DATABASE_URL` (least-privilege `nacos_app` runtime role) and `SUPABASE_DATABASE_URL_UNPOOLED` (database-owner migration role); the existing Neon-managed `DATABASE_URL` variables remain untouched as a fallback. Supabase's exact transaction/session pooler hosts must be copied from the Connect dialog; never guess the pooler hostname.
 - Keep the existing Neon database intact until old records are reconciled and production smoke tests pass.
 
 ## Release status (2026-10-22)
