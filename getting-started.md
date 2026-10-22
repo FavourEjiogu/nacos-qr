@@ -2,7 +2,7 @@
 
 ## 1. Architecture
 
-NACOS QR is a small Next.js/Prisma/Neon application for official NACOS memo verification.
+NACOS QR is a small Next.js/Prisma/Supabase PostgreSQL application for official NACOS memo verification.
 
 - Authoritative memo text is stored in PostgreSQL.
 - QR codes point to a canonical public verification URL.
@@ -45,7 +45,7 @@ npx prisma generate
 npm run dev
 ```
 
-If the database schema needs to be synchronized in a development environment, use the project's existing Neon/Prisma workflow. Do not reset or recreate the production database to fix an application-code problem.
+The schema is versioned under `prisma/migrations/`. The initial migration has already been applied to the new Supabase project. For future schema changes, create a Prisma migration locally and deploy it with `npx prisma migrate deploy` against the intended database. Never reset or recreate the production database to fix an application-code problem.
 
 ## 4. Verification commands
 
@@ -67,7 +67,7 @@ A successful Vercel build proves that the production build completed. It does no
 
 The admin route is an additional discovery barrier, not an authorization mechanism. Authentication and authorization are enforced server-side.
 
-## 6. Production deployment
+## 6. Supabase connection setup\n\nCreate the connection strings in the Supabase Dashboard for project `nacos-qr` (project ref `ayatnoolplaimcokvsfs`). Use the **Transaction pooler** string (port `6543`) for `DATABASE_URL` on Vercel and add `pgbouncer=true&connection_limit=1&sslmode=require` to its query parameters. Use the **Session pooler** string (port `5432`) for `DATABASE_URL_UNPOOLED` so Prisma migrations can connect from IPv4-only environments. Copy the actual pooler host from Supabase's Connect dialog; do not guess it from the region. Keep the database password URL-encoded if it contains reserved characters.\n\nThe five application tables have RLS enabled and no public Data API policies. This is intentional: public verification is served by the Next.js server, which uses a private database connection. Do not add `NEXT_PUBLIC_` database credentials or grant direct table access to `anon`/`authenticated`.\n\n## 7. Production deployment
 
 The GitHub repository is connected to Vercel and `master` is the production branch.
 
@@ -81,7 +81,7 @@ Before production release:
 6. Smoke-test public verification and admin authentication.
 7. Create a test memo only if using an intentionally controlled test record; never invent production records merely for demonstration.
 
-## 7. Integrity and lifecycle rules
+## 8. Integrity and lifecycle rules
 
 The HMAC covers the authoritative memo fields, including:
 
@@ -100,7 +100,7 @@ Revocation status is not included in the content signature. A revoked memo shoul
 
 Changing `APP_SECRET` invalidates signatures created with the old secret. Treat the secret as long-lived production key material.
 
-## 8. Security notes
+## 9. Security notes
 
 - Never trust browser-supplied authorization state.
 - Never expose `AUTH_SECRET`, `APP_SECRET`, password hashes, database credentials, or admin credentials to the client.
@@ -108,6 +108,6 @@ Changing `APP_SECRET` invalidates signatures created with the old secret. Treat 
 - Do not commit helper scripts containing credentials or destructive Git automation.
 - Do not claim that cryptographic verification proves the physical document itself was never altered; it proves the authoritative record's integrity.
 
-## 9. Current production status
+## 10. Current production status
 
 The production Vercel project is connected to this GitHub repository. Check the Vercel deployment state and runtime logs before declaring a release healthy.
