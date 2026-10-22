@@ -11,7 +11,7 @@
 **Reason:** Vercel serverless runtime does not support direct IPv6 database connections in the default environment. Pooler hosts vary and must be copied from Supabase Connect; do not synthesize them.
 
 ## ADR-003 — Deny public Data API access
-**Decision:** Enable RLS and define no `anon` or `authenticated` table policies; revoke those roles' table privileges.
+**Decision:** Enable RLS, grant all-row policies only to the private `nacos_app` runtime role, and revoke table privileges from `anon` and `authenticated`.
 
 **Reason:** Public verification is mediated by server-side application logic. Granting table-wide SELECT would expose the complete memo registry and could reveal unpublished records.
 
