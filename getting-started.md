@@ -17,8 +17,8 @@ NACOS QR is a small Next.js/Prisma/Supabase PostgreSQL application for official 
 Create `.env` locally. Never commit it.
 
 ```env
-DATABASE_URL="postgresql://..."
-DATABASE_URL_UNPOOLED="postgresql://..."
+SUPABASE_DATABASE_URL="postgresql://..."
+SUPABASE_SUPABASE_DATABASE_URL_UNPOOLED="postgresql://..."
 
 ADMIN_ROUTE_SECRET="use-a-long-random-value"
 ADMIN_PASSWORD_HASH="bcrypt-hash-of-your-admin-password"
@@ -67,7 +67,7 @@ A successful Vercel build proves that the production build completed. It does no
 
 The admin route is an additional discovery barrier, not an authorization mechanism. Authentication and authorization are enforced server-side.
 
-## 6. Supabase connection setup\n\nCreate the connection strings in the Supabase Dashboard for project `nacos-qr` (project ref `ayatnoolplaimcokvsfs`). Use the **Transaction pooler** string (port `6543`) for `DATABASE_URL` on Vercel and add `pgbouncer=true&connection_limit=1&sslmode=require` to its query parameters. Use the **Session pooler** string (port `5432`) for `DATABASE_URL_UNPOOLED` so Prisma migrations can connect from IPv4-only environments. Copy the actual pooler host from Supabase's Connect dialog; do not guess it from the region. Keep the database password URL-encoded if it contains reserved characters.\n\nThe five application tables have RLS enabled and no public Data API policies. This is intentional: public verification is served by the Next.js server, which uses a private database connection. Do not add `NEXT_PUBLIC_` database credentials or grant direct table access to `anon`/`authenticated`.\n\n## 7. Production deployment
+## 6. Supabase connection setup\n\nCreate the connection strings in the Supabase Dashboard for project `nacos-qr` (project ref `ayatnoolplaimcokvsfs`). Use the **Transaction pooler** string (port `6543`) for `SUPABASE_DATABASE_URL` on Vercel and add `pgbouncer=true&connection_limit=1&sslmode=require` to its query parameters. Use the **Session pooler** string (port `5432`) for `SUPABASE_SUPABASE_DATABASE_URL_UNPOOLED` so Prisma migrations can connect from IPv4-only environments. Copy the actual pooler host from Supabase's Connect dialog; do not guess it from the region. Keep the database password URL-encoded if it contains reserved characters.\n\nThe Neon integration's existing `DATABASE_URL` variables are deliberately left untouched as a fallback; the app reads only `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED`. The five application tables have RLS enabled and no public Data API policies. This is intentional: public verification is served by the Next.js server, which uses a private database connection. Do not add `NEXT_PUBLIC_` database credentials or grant direct table access to `anon`/`authenticated`.\n\n## 7. Production deployment
 
 The GitHub repository is connected to Vercel and `master` is the production branch.
 
