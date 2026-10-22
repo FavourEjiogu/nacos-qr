@@ -6,7 +6,7 @@ Move NACOS QR's PostgreSQL hosting from Neon to Supabase without changing memo-v
 ## Completed
 1. Created Supabase project `nacos-qr` (`ayatnoolplaimcokvsfs`) in `eu-central-1`; project reports healthy.
 2. Applied initial schema for `Memo`, `MemoLink`, `SerialCounter`, `LoginAttempt`, and `AuditLog`.
-3. Enabled RLS on all five application tables and revoked table access from `anon` and `authenticated`.
+3. Enabled RLS on all five application tables, created a least-privilege `nacos_app` runtime role with table-scoped policies, and revoked table access from `anon` and `authenticated`.
 4. Added indexes for memo creation/status, memo-link foreign keys, login-attempt rate limiting, and audit history.
 5. Created a versioned Prisma migration and registered its SHA-256 checksum in `_prisma_migrations`.
 6. Removed Neon-specific package dependencies and `neon.ts` config.
