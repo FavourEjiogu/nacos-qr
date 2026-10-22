@@ -58,10 +58,10 @@ npm run build
 
 The repository is connected to Vercel. The `master` branch is the production source.
 
-Production requires:
+Production requires the two Supabase connection variables below (the existing Neon-managed variables remain untouched as a fallback):
 
-- `DATABASE_URL`
-- `DATABASE_URL_UNPOOLED`
+- `SUPABASE_DATABASE_URL`
+- `SUPABASE_DATABASE_URL_UNPOOLED`
 - `ADMIN_ROUTE_SECRET`
 - `ADMIN_PASSWORD_HASH`
 - `AUTH_SECRET`
