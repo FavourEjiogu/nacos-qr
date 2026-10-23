@@ -29,7 +29,7 @@ export function resolveIssuingOffice(codeValue: unknown, customCodeValue?: unkno
     if (typeof customCodeValue !== 'string' || typeof customNameValue !== 'string') return null;
     const customCode = customCodeValue.trim().toUpperCase();
     const customName = customNameValue.trim();
-    if (!CODE_PATTERN.test(customCode) || knownByCode.has(customCode) || customName.length < 3 || customName.length > 120) {
+    if (!CODE_PATTERN.test(customCode) || customCode === 'OTHER' || knownByCode.has(customCode) || customName.length < 3 || customName.length > 120) {
       return null;
     }
     return { code: customCode, name: customName, label: customName };
