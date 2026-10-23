@@ -5,6 +5,13 @@ import { generateMemoHash, generatePublicId } from '@/lib/crypto';
 import { isAuthenticated } from '@/lib/auth';
 import { resolveIssuingOffice } from '@/lib/offices';
 
+class OfficeCodeConflictError extends Error {
+  constructor() {
+    super('That office code is already registered to a different office name. Choose a new code.');
+    this.name = 'OfficeCodeConflictError';
+  }
+}
+
 export async function POST(req: NextRequest) {
   if (!(await isAuthenticated(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -31,16 +38,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Choose a valid issuing office and office code.' }, { status: 400 });
     }
 
-    // One office code must permanently identify one office name; otherwise
-    // references from different offices could collide in the same series.
-    const officeCodeConflict = await prisma.memo.findFirst({
-      where: {
-        officeCode: issuingOffice.code,
-        officeName: { not: issuingOffice.name },
-      },
-      select: { id: true },
+    // Fail early for an already-registered code/name mismatch. The same check
+    // is repeated under a transaction-scoped advisory lock before inserting.
+    const registeredOffice = await prisma.issuingOffice.findUnique({
+      where: { code: issuingOffice.code },
+      select: { code: true, name: true },
     });
-    if (officeCodeConflict) {
+    if (registeredOffice && registeredOffice.name !== issuingOffice.name) {
       return NextResponse.json(
         { error: 'That office code is already registered to a different office name. Choose a new code.' },
         { status: 409 },
@@ -152,6 +156,22 @@ export async function POST(req: NextRequest) {
         const contentHash = generateMemoHash(memoData);
 
         memo = await prisma.$transaction(async (tx: any) => {
+          // Lock by code so concurrent first-time custom-office registrations
+          // cannot claim the same code for different office names.
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${issuingOffice.code}, 0))`;
+          const officeInTransaction = await tx.issuingOffice.findUnique({
+            where: { code: issuingOffice.code },
+            select: { code: true, name: true },
+          });
+          if (officeInTransaction && officeInTransaction.name !== issuingOffice.name) {
+            throw new OfficeCodeConflictError();
+          }
+          if (!officeInTransaction) {
+            await tx.issuingOffice.create({
+              data: { code: issuingOffice.code, name: issuingOffice.name },
+            });
+          }
+
           const createdMemo = await tx.memo.create({
             data: {
               ...memoData,
@@ -179,6 +199,9 @@ export async function POST(req: NextRequest) {
 
         break; 
       } catch (err: any) {
+        if (err instanceof OfficeCodeConflictError) {
+          return NextResponse.json({ error: err.message }, { status: 409 });
+        }
         if (err.code === 'P2002') {
           attempts++;
           if (attempts >= MAX_ATTEMPTS) throw new Error('High concurrency error');
