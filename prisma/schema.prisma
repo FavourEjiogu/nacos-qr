@@ -15,6 +15,7 @@ model Memo {
   officeCode           String     @default("PRES")
   officeName           String     @default("Office of the President")
   integrityVersion     Int        @default(1)
+  issuingOffice        IssuingOffice @relation(fields: [officeCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
   serialNumber         String     @unique
   title                String
   summary              String?
@@ -53,6 +54,15 @@ model MemoLink {
 model SerialCounter {
   counterKey String @id
   lastValue  Int    @default(0)
+}
+
+model IssuingOffice {
+  code      String   @id
+  name      String
+  createdAt DateTime @default(now())
+  memos     Memo[]
+
+  @@map("IssuingOffice")
 }
 
 model AdminConfig {
