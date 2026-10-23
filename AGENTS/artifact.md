@@ -6,9 +6,9 @@ Move NACOS QR's PostgreSQL hosting from Neon to Supabase without changing memo-v
 ## Completed
 1. Created Supabase project `nacos-qr` (`ayatnoolplaimcokvsfs`) in `eu-central-1`; project reports healthy.
 2. Applied initial schema for `Memo`, `MemoLink`, `SerialCounter`, `LoginAttempt`, and `AuditLog`.
-3. Enabled RLS on all five application tables, created a least-privilege `nacos_app` runtime role with table-scoped policies, and revoked table access from `anon` and `authenticated`.
+3. Enabled RLS on all seven application tables, created a least-privilege `nacos_app` runtime role with table-scoped policies, and revoked table access from `anon` and `authenticated`.
 4. Added indexes for memo creation/status, memo-link foreign keys, login-attempt rate limiting, and audit history.
-5. Applied the privacy-safe references/admin settings migration and registered its exact SHA-256 checksum in `_prisma_migrations` (three applied Prisma migrations).
+5. Applied the privacy-safe references/admin settings, persistent office registry, and office-FK index migrations. All five Prisma migration checksums are registered in `_prisma_migrations`.
 6. Removed Neon-specific package dependencies and `neon.ts` config.
 7. Updated README, setup guide, and environment template for Supabase.
 8. Opened PR #1: https://github.com/FavourEjiogu/nacos-qr/pull/1.
@@ -19,14 +19,14 @@ Move NACOS QR's PostgreSQL hosting from Neon to Supabase without changing memo-v
 - Supabase project state: `ACTIVE_HEALTHY`.
 - Table inspection confirmed all five tables and expected columns/foreign keys.
 - All five memo application tables plus `AdminConfig` have RLS enabled; only the `nacos_app` role receives application-table policies.
-- SQL count query returned 0 memos, 0 links, 0 serial counters, 0 login attempts, and 0 audit logs; three Prisma migration records are present.
-- Supabase security advisor should be rerun after the new `AdminConfig` table/migration; `_prisma_migrations` remains deliberately denied to the runtime and public roles.
+- SQL counts returned 0 memos, 0 links, 0 serial counters, 0 login attempts, 0 audit logs, and 0 AdminConfig rows; the IssuingOffice registry contains 11 seeded offices. Five Prisma migration records are finished with verified checksums.
+- Supabase security advisor reports one informational RLS-without-policy finding on `public._prisma_migrations`, which is intentionally unavailable to the runtime and public roles. No unindexed foreign-key finding remains; unused-index warnings are expected on the empty target database.
 - Supabase performance advisor reports unused indexes because the new database has no workload yet; this is expected before launch.
-- Dependency refresh upgraded Next.js to `16.4.2`, React to `19.3.1`, the QR/icon dependencies, and ESLint/Vitest; the one-time workflow passed `npm audit --audit-level=high`, lint, tests, and build before the final office-code collision guard was added. A new full CI run is required for the latest commit.
+- Latest GitHub Actions run passed dependency audit (`npm audit --audit-level=high`, 0 reported vulnerabilities), lint, all 15 tests, and the production build. Latest Vercel preview deployment is READY.
 - Vercel runtime/build-log calls returned 403; do not claim runtime tests passed.
 
 ## Remaining release blockers
-0. Confirm the current GitHub CI passes the latest office-code guard and includes the npm audit gate.
+0. Obtain exact Supabase Transaction/Session pooler hostnames and configure `SUPABASE_DATABASE_URL`, `SUPABASE_DATABASE_URL_UNPOOLED`, and a strong `nacos_app` password. The current Supabase runtime role password is not set.
 1. Obtain the exact Supabase transaction and session pooler connection strings from the project's Connect dialog.
 2. Set `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED` in Vercel without exposing them to browser bundles.
 3. Reconcile the old Neon database and migrate any existing rows while preserving IDs, timestamps, serial counters, hashes, and relations.
