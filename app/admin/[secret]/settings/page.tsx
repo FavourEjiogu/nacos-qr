@@ -130,7 +130,7 @@ export default function AdminSettingsPage() {
         <h2 className="heading" style={{ fontSize: '21px', marginBottom: '8px' }}>Rotate private admin URL</h2>
         <p className="text-sm mb-6">
           This generates a new, random workspace link and immediately invalidates the previous one.
-          It also signs out other admin sessions. Open the new link and sign in again. Save the new link in your password manager before closing this page.
+          It signs out all admin sessions, including this one. Open the new link and sign in again. Save the new link in your password manager before closing this page.
         </p>
         <form onSubmit={handlePathRotation} style={{ display: 'grid', gap: '16px' }}>
           <div>
