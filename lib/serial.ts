@@ -3,11 +3,13 @@ import { generatePublicId } from '@/lib/crypto';
 
 export type MemoVisibility = 'PUBLIC' | 'CONFIDENTIAL';
 
+type SerialCounterClient = Pick<typeof prisma, 'serialCounter'>;
+
 export async function generateSerialNumber(input: {
   visibility: MemoVisibility;
   officeCode: string;
   issuedAt?: Date;
-}): Promise<string> {
+}, client: SerialCounterClient = prisma): Promise<string> {
   const { visibility, officeCode, issuedAt = new Date() } = input;
   const year = String(issuedAt.getUTCFullYear());
   const normalizedCode = officeCode.trim().toUpperCase();
@@ -21,7 +23,7 @@ export async function generateSerialNumber(input: {
 
   // The counter key scopes each public series by year and issuing office.
   const counterKey = `PUBLIC:${normalizedCode}:${year}`;
-  const counter = await prisma.serialCounter.upsert({
+  const counter = await client.serialCounter.upsert({
     where: { counterKey },
     update: { lastValue: { increment: 1 } },
     create: { counterKey, lastValue: 1 },
