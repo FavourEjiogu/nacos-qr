@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { generateMemoHash, generatePublicId, verifyMemoHash } from '@/lib/crypto';
 import { generateSerialNumber } from '@/lib/serial';
 import { isValidAdminPath } from '@/lib/admin-config';
+import { resolveIssuingOffice } from '@/lib/offices';
 import * as auth from '@/lib/auth';
 
 const mockState = vi.hoisted(() => {
@@ -245,6 +246,18 @@ describe('NACOS QR identifiers and integrity', () => {
     const active = makeMemo();
     const revoked = { ...active, status: 'REVOKED', revocationReason: 'Test reason' };
     expect(verifyMemoHash(revoked, active.contentHash)).toBe(true);
+  });
+});
+
+describe('Issuing-office registry', () => {
+  it('rejects reserved codes and accepts valid unique custom office codes', () => {
+    expect(resolveIssuingOffice('OTHER', 'OTHER', 'Committee on Communications')).toBeNull();
+    expect(resolveIssuingOffice('OTHER', 'PRES', 'Other Presidency')).toBeNull();
+    expect(resolveIssuingOffice('OTHER', 'COMMS', 'Committee on Communications')).toEqual({
+      code: 'COMMS',
+      name: 'Committee on Communications',
+      label: 'Committee on Communications',
+    });
   });
 });
 
