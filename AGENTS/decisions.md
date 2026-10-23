@@ -24,3 +24,13 @@
 **Decision:** Keep Neon as fallback and do not merge the migration until the connection is configured and source/target data are reconciled.
 
 **Reason:** A database switch without record migration can break existing QR codes and verification IDs.
+
+## ADR-006 — Separate public and confidential numbering and lookup
+**Decision:** Public records use year/office-scoped sequential series plus a random 26-character public verification ID. Confidential letters use a different series with a cryptographically random 26-character token and no public ID/QR.
+
+**Reason:** Office provenance remains visible, but private reference numbers must not lead public users to confidential content. Every public serial and ID lookup is explicitly scoped to records classified PUBLIC.
+
+## ADR-007 — Keep office identity and security controls visible to authorised administrators
+**Decision:** Include office code and office name on every new record and in the versioned HMAC. Provide authenticated UI controls for password change, private URL rotation, and URL recovery.
+
+**Reason:** Official references should identify their issuing office, while administrators should be able to rotate credentials without manual environment-file edits. Old HMAC versions remain compatible.
