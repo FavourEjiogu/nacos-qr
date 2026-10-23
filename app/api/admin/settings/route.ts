@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction(async (tx) => {
       await tx.adminConfig.upsert({
         where: { id: 1 },
-        create: { id: 1, adminPathHash: hashAdminPath(newPath) },
-        update: { adminPathHash: hashAdminPath(newPath) },
+        create: { id: 1, adminPathHash: hashAdminPath(newPath), authVersion: 1 },
+        update: { adminPathHash: hashAdminPath(newPath), authVersion: { increment: 1 } },
       });
       await tx.auditLog.create({
         data: {
