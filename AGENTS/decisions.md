@@ -34,3 +34,9 @@
 **Decision:** Include office code and office name on every new record and in the versioned HMAC. Provide authenticated UI controls for password change, private URL rotation, and URL recovery.
 
 **Reason:** Official references should identify their issuing office, while administrators should be able to rotate credentials without manual environment-file edits. Old HMAC versions remain compatible.
+
+
+## ADR-008 — Database-enforced office registry and atomic public series
+**Decision:** Store office codes in a dedicated `IssuingOffice` table with a primary key, link every memo to a registered office, serialize first-use registration with a transaction-scoped advisory lock, and allocate a public serial in the same transaction that writes the memo and audit event.
+
+**Reason:** The office portion of an official reference must not change identity or collide when multiple administrators issue documents concurrently. A failed issuance must not consume a public sequence number or leave a partial memo/audit record.
