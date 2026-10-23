@@ -102,6 +102,7 @@ const mockState = vi.hoisted(() => {
     }),
     findMany: vi.fn(async ({ where = {} }: RecordData = {}) =>
       auditLogs.filter((log) => Object.entries(where).every(([key, value]) => log[key] === value)),
+    ),
   };
   prisma.$transaction = vi.fn(async (callback: (tx: RecordData) => Promise<unknown>) => callback(prisma));
   prisma.$disconnect = vi.fn(async () => undefined);
