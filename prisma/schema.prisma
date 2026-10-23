@@ -39,6 +39,7 @@ model Memo {
   @@index([createdAt])
   @@index([status])
   @@index([visibility, status])
+  @@index([officeCode])
 }
 
 model MemoLink {
