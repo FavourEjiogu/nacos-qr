@@ -13,7 +13,9 @@ Move NACOS QR's PostgreSQL hosting from Neon to Supabase without changing memo-v
 7. Updated README, setup guide, and environment template for Supabase.
 8. Opened PR #1: https://github.com/FavourEjiogu/nacos-qr/pull/1.
 
-9. Added public/private classification, per-office public counters, cryptographically random confidential references, and secure password/path management in the admin UI.\n\n## Verification evidence
+9. Added public/private classification, per-office public counters, cryptographically random confidential references, and secure password/path management in the admin UI.
+
+## Verification evidence
 - Supabase project state: `ACTIVE_HEALTHY`.
 - Table inspection confirmed all five tables and expected columns/foreign keys.
 - All five memo application tables plus `AdminConfig` have RLS enabled; only the `nacos_app` role receives application-table policies.
