@@ -12,6 +12,7 @@ const mockState = vi.hoisted(() => {
   const auditLogs: RecordData[] = [];
   const counters = new Map<string, number>();
   const loginAttempts: RecordData[] = [];
+  const offices = new Map<string, string>();
   let adminConfig: RecordData | null = null;
   let memoSequence = 0;
   let auditSequence = 0;
@@ -50,14 +51,7 @@ const mockState = vi.hoisted(() => {
       return memo;
     }),
     findUnique: vi.fn(async ({ where }: RecordData) => findMemo(where)),
-    findFirst: vi.fn(async ({ where }: RecordData) => {
-      if (where.officeName?.not) {
-        return [...memos.values()].find((memo) =>
-          memo.officeCode === where.officeCode && memo.officeName !== where.officeName.not,
-        ) ?? null;
-      }
-      return findMemo(where);
-    }),
+    findFirst: vi.fn(async ({ where }: RecordData) => findMemo(where)),
     findMany: vi.fn(async () => [...memos.values()]),
     update: vi.fn(async ({ where, data }: RecordData) => {
       const memo = findMemo(where);
@@ -73,6 +67,22 @@ const mockState = vi.hoisted(() => {
       return memo;
     }),
   };
+  prisma.issuingOffice = {
+    findUnique: vi.fn(async ({ where }: RecordData) => {
+      const name = offices.get(where.code);
+      return name === undefined ? null : { code: where.code, name };
+    }),
+    create: vi.fn(async ({ data }: RecordData) => {
+      if (offices.has(data.code)) {
+        const error: RecordData = new Error('Unique office code violation');
+        error.code = 'P2002';
+        throw error;
+      }
+      offices.set(data.code, data.name);
+      return { ...data, createdAt: new Date() };
+    }),
+  };
+  prisma.$queryRaw = vi.fn(async () => []);
   prisma.adminConfig = {
     findUnique: vi.fn(async () => adminConfig),
     upsert: vi.fn(async ({ create, update }: RecordData) => {
@@ -126,12 +136,14 @@ const mockState = vi.hoisted(() => {
       auditLogs.length = 0;
       counters.clear();
       loginAttempts.length = 0;
+      offices.clear();
       adminConfig = null;
       memoSequence = 0;
       auditSequence = 0;
       linkSequence = 0;
     },
     seedMemo(memo: RecordData) { memos.set(memo.id, memo); },
+    seedOffice(code: string, name: string) { offices.set(code, name); },
     getAdminConfig() { return adminConfig ? { ...adminConfig } : null; },
   };
 });
@@ -368,11 +380,7 @@ describe('NACOS QR authentication and issuance APIs', () => {
   });
 
   it('prevents reusing an issuing-office code for a different office name', async () => {
-    mockState.seedMemo(makeMemo({
-      id: 'existing-office-memo',
-      officeCode: 'COMMS',
-      officeName: 'Committee on Communications',
-    }));
+    mockState.seedOffice('COMMS', 'Committee on Communications');
     const { POST } = await import('../app/api/admin/memos/route');
     const { NextRequest } = await import('next/server');
     vi.mocked(auth.isAuthenticated).mockResolvedValue(true);
