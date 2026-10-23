@@ -28,8 +28,8 @@ jobs:
       - name: Upgrade patched runtime and test dependencies
         run: |
           npm install next@^16.4.1 react@^19.3.1 react-dom@^19.3.1 lucide-react@^1.61.0 qrcode.react@^4.2.0 --no-audit --no-fund
-          npm install --save-dev eslint@^10 @eslint/js@^10 vitest@^5.0.5 @types/react@^19 @types/react-dom@^19 --no-audit --no-fund
           npm uninstall --save-dev eslint-config-next @eslint/eslintrc --no-audit --no-fund
+          npm install --save-dev eslint@^10 @eslint/js@^10 vitest@^5.0.5 @types/react@^19 @types/react-dom@^19 --no-audit --no-fund
 
       - name: Confirm dependency security
         run: npm audit --audit-level=high
