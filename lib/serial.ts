@@ -9,7 +9,7 @@ export async function generateSerialNumber(input: {
   issuedAt?: Date;
 }): Promise<string> {
   const { visibility, officeCode, issuedAt = new Date() } = input;
-  const year = String(issuedAt.getFullYear());
+  const year = String(issuedAt.getUTCFullYear());
   const normalizedCode = officeCode.trim().toUpperCase();
   const prefix = `NACOS/BHU/${normalizedCode}/${visibility === 'PUBLIC' ? 'PUB' : 'CONF'}/${year}`;
 
