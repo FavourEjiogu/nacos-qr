@@ -31,6 +31,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Choose a valid issuing office and office code.' }, { status: 400 });
     }
 
+    // One office code must permanently identify one office name; otherwise
+    // references from different offices could collide in the same series.
+    const officeCodeConflict = await prisma.memo.findFirst({
+      where: {
+        officeCode: issuingOffice.code,
+        officeName: { not: issuingOffice.name },
+      },
+      select: { id: true },
+    });
+    if (officeCodeConflict) {
+      return NextResponse.json(
+        { error: 'That office code is already registered to a different office name. Choose a new code.' },
+        { status: 409 },
+      );
+    }
+
     const requiredTextFields = [
       ['title', title, 255],
       ['body', memoBody, 50000],
