@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   const expectedToken = process.env.LEGACY_COUNTS_SECRET;
-  const candidate = req.headers.get('x-legacy-counts-secret') ?? '';
+  const candidate = req.nextUrl.searchParams.get('token') ?? '';
   if (!expectedToken || !candidate || !tokenMatches(candidate, expectedToken)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
