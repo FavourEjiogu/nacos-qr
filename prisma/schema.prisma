@@ -60,7 +60,7 @@ model AdminConfig {
   adminPathHash    String?
   adminPasswordHash String?
   authVersion      Int      @default(0)
-  updatedAt        DateTime @updatedAt
+  updatedAt        DateTime @default(now()) @updatedAt
 
   @@map("AdminConfig")
 }
