@@ -12,7 +12,7 @@
 - **Attack:** Exposing database credentials or granting table-wide REST access would allow direct access outside the custom admin flow.
 - **Impact:** Unauthorized reads/writes to authoritative memo and audit records.
 - **Remediation:** Keep credentials server-only; RLS is enabled; only the server-side `nacos_app` role has table policies, while public roles have no table privileges. Do not add public policies for direct table access.
-- **Status:** Table grants and role scope verified; `nacos_app` password and production connection configuration remain pending.
+- **Status:** RLS/grants/policies verified; `nacos_app` password remains unset and Vercel Supabase connection configuration is missing.
 
 ### LOW/INFO — Migration metadata has no RLS policy
 - **Observation:** Supabase advisor flags only public._prisma_migrations because RLS is enabled without a policy.
@@ -20,7 +20,7 @@
 - **Verification:** The five application tables have a policy scoped to nacos_app; anon and authenticated have no table privileges.
 
 ### OPEN — End-to-end runtime testing unavailable
-- **Observation:** Vercel runtime and build log endpoints returned 403 from the available connector.
+- **Observation:** Vercel denied protected preview fetches (403); build status is readable and the deployment is READY, but database-backed endpoints cannot be called via the current connector scope.
 - **Impact:** No verified root cause for the previously reported Internal Server Error.
 - **Remediation:** Restore authorized log access or perform direct browser/runtime tests after env configuration.
 
