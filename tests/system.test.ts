@@ -498,6 +498,7 @@ describe('NACOS QR authentication and issuance APIs', () => {
       const result = await response.json();
       expect(result.newPath).toHaveLength(32);
       const stored = mockState.getAdminConfig();
+      expect(stored?.authVersion).toBe(1);
       expect(stored?.adminPathHash).toMatch(/^[a-f0-9]{64}$/);
       expect(stored?.adminPathHash).not.toBe(result.newPath);
       expect(await isValidAdminPath(result.newPath)).toBe(true);
