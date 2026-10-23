@@ -20,12 +20,12 @@ Official NACOS memo-verification system. Administrators issue authoritative memo
 - Keep the existing Neon database intact until old records are reconciled and production smoke tests pass.
 
 ## Release status (2026-10-23, updated)
-- Supabase project exists; the initial schema and privacy-safe reference/admin-settings migration are applied.
-- Schema and Prisma migration history were checked through Supabase SQL tools.
-- Supabase currently has zero memo, link, serial-counter, login-attempt, and audit-log rows; source Neon row counts have not been reconciled.
+- Supabase project exists; the privacy-safe reference/admin-settings, database-enforced issuing-office registry, and office-FK index migrations are applied.
+- Schema, RLS policies/grants, office registry, foreign-key index, and all five Prisma migration checksums were checked through Supabase SQL tools.
+- Supabase currently has zero memo, link, serial-counter, login-attempt, audit-log, and admin-config rows, with 11 seeded issuing offices; source Neon counts have not been reconciled.
 - Vercel production has not yet been switched to Supabase: `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED` are not configured yet.
 - Vercel logs APIs returned 403; production runtime behavior is not certified.
-- PR #1 remains open; do not merge until connection configuration, data reconciliation, and live smoke tests are complete.
+- PR #1 remains open; do not merge until connection configuration, Neon data reconciliation, and database-backed smoke tests are complete.
 - Issuance separates PUBLIC and CONFIDENTIAL records. Confidential records have no public ID/QR and public lookups filter to PUBLIC records only.
 - Reference format: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<SEQUENCE>` or `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<RANDOM-TOKEN>`.
 - Admin settings support password changes, URL rotation, and `/admin/recover` recovery.
