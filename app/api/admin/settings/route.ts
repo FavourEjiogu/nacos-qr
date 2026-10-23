@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       newPath,
-      message: 'Admin URL rotated. Copy and save the new link; the previous workspace URL no longer works.',
+      message: 'Admin URL rotated. All admin sessions have been invalidated. Save the new link and sign in again.',
     });
   } catch (error) {
     console.error('Admin settings update failed:', error);
