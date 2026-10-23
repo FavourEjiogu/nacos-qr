@@ -1,4 +1,9 @@
 import { notFound } from 'next/navigation';
+
+export const metadata = {
+  title: 'NACOS QR Admin',
+  robots: { index: false, follow: false },
+};
 import { AuthProvider } from './AuthContext';
 import { isValidAdminPath } from '@/lib/admin-config';
 
