@@ -40,7 +40,7 @@ Administrative authentication uses a bcrypt password hash, signed HttpOnly sessi
 
 Public references are sequential within the issuing-office/year series. For example, the Presidency starts a series like `NACOS/BHU/PRES/PUB/2026/0001`; the Secretariat uses `NACOS/BHU/SEC/PUB/2026/0001`. The office code is stable and recorded on the memo, so references identify both the issuing office and the document's public classification.
 
-Confidential correspondence uses a separate series, such as `NACOS/BHU/PRES/CONF/2026/ABCDE-FGHIJ-KLMNO-PQRST-UVWXYZ`. The final token is generated from cryptographically secure randomness. A confidential record receives **no public verification ID and no public QR**. Entering its serial in the public verifier returns “Record not found,” even if someone learns the reference. Choose **Confidential** for private letters; do not rely on the document-type label to make a record private.
+Confidential correspondence uses a separate series, such as `NACOS/BHU/PRES/CONF/2026/23456-789AB-CDEFG-HJKLM-NPQRST`. The final token is generated from cryptographically secure randomness. A confidential record receives **no public verification ID and no public QR**. Entering its serial in the public verifier returns “Record not found,” even if someone learns the reference. Choose **Confidential** for private letters; do not rely on the document-type label to make a record private.
 
 The Presidency's office code is `PRES`. Other registered office codes distinguish their own public and confidential series. Office code reuse for a different office name is rejected to preserve a stable audit trail.
 
