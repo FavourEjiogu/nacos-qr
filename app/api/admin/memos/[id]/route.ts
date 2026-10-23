@@ -17,11 +17,15 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (status !== 'REVOKED') {
       return NextResponse.json({ error: 'Invalid status update. Can only revoke.' }, { status: 400 });
     }
+    if (revocationReason !== undefined && revocationReason !== null &&
+        (typeof revocationReason !== 'string' || revocationReason.length > 1000)) {
+      return NextResponse.json({ error: 'Invalid revocation reason' }, { status: 400 });
+    }
 
     const memo = await prisma.$transaction(async (tx) => {
       const updatedMemo = await tx.memo.update({
         where: { id: params.id },
-        data: { status: 'REVOKED', revocationReason }
+        data: { status: 'REVOKED', revokedAt: new Date(), revocationReason: typeof revocationReason === 'string' ? revocationReason.trim().slice(0, 1000) : null }
       });
 
       await tx.auditLog.create({
@@ -34,7 +38,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       return updatedMemo;
     });
 
-    revalidatePath(`/verify/${memo.publicId}`);
+    if (memo.publicId && memo.visibility === 'PUBLIC') {
+      revalidatePath(`/verify/${memo.publicId}`);
+    }
 
     return NextResponse.json({ success: true, memo });
   } catch {

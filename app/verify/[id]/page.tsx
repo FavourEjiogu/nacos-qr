@@ -2,7 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { verifyMemoHash } from '@/lib/crypto';
 import { redirect } from 'next/navigation';
 
-export const revalidate = 60; // Cache this page for 60 seconds
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function VerifyPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -10,16 +11,16 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
 
   // If it contains a slash, it's a serial number. Redirect to canonical publicId URL.
   if (decodedId.includes('/')) {
-    const memoBySerial = await prisma.memo.findUnique({
-      where: { serialNumber: decodedId }
+    const memoBySerial = await prisma.memo.findFirst({
+      where: { serialNumber: decodedId, visibility: 'PUBLIC' }
     });
-    if (memoBySerial) {
+    if (memoBySerial?.publicId) {
       redirect(`/verify/${memoBySerial.publicId}`);
     }
   }
 
-  const memo = await prisma.memo.findUnique({
-    where: { publicId: decodedId },
+  const memo = await prisma.memo.findFirst({
+    where: { publicId: decodedId, visibility: 'PUBLIC' },
     include: { links: true }
   });
 
@@ -96,9 +97,17 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
           <div className="mono" style={{ fontSize: '16px', fontWeight: 500 }}>{memo.serialNumber}</div>
         </div>
         
+        {memo.publicId && (
+          <div className="mb-6">
+            <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Verification ID</div>
+            <div className="mono" style={{ fontSize: '16px', fontWeight: 500 }}>{memo.publicId}</div>
+          </div>
+        )}
+
         <div className="mb-6">
-          <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Verification ID</div>
-          <div className="mono" style={{ fontSize: '16px', fontWeight: 500 }}>{memo.publicId}</div>
+          <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Issuing Office</div>
+          <div style={{ fontSize: '16px', fontWeight: 500 }}>{memo.officeName || 'NACOS'}</div>
+          <div className="mono text-sm" style={{ marginTop: '4px' }}>{memo.officeCode || 'NACOS'}</div>
         </div>
 
         <div className="mb-6">

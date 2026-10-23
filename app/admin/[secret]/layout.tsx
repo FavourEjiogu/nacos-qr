@@ -1,10 +1,16 @@
 import { notFound } from 'next/navigation';
+
+export const metadata = {
+  title: 'NACOS QR Admin',
+  robots: { index: false, follow: false },
+};
 import { AuthProvider } from './AuthContext';
+import { isValidAdminPath } from '@/lib/admin-config';
 
 export default async function AdminLayout(props: { children: React.ReactNode, params: Promise<{ secret: string }> }) {
   const { children } = props;
   const params = await props.params;
-  if (params.secret !== process.env.ADMIN_ROUTE_SECRET) {
+  if (!(await isValidAdminPath(params.secret))) {
     notFound();
   }
 

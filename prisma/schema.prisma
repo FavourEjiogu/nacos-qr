@@ -4,13 +4,18 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  url       = env("SUPABASE_DATABASE_URL")
+  directUrl = env("SUPABASE_DATABASE_URL_UNPOOLED")
 }
 
 model Memo {
   id                   String     @id @default(uuid())
-  publicId             String     @unique
+  publicId             String?    @unique
+  visibility           String     @default("PUBLIC")
+  officeCode           String     @default("PRES")
+  officeName           String     @default("Office of the President")
+  integrityVersion     Int        @default(1)
+  issuingOffice        IssuingOffice @relation(fields: [officeCode], references: [code], onDelete: Restrict, onUpdate: Cascade)
   serialNumber         String     @unique
   title                String
   summary              String?
@@ -30,6 +35,11 @@ model Memo {
   revocationReason     String?
   auditLogs            AuditLog[]
   links                MemoLink[]
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([visibility, status])
+  @@index([officeCode])
 }
 
 model MemoLink {
@@ -38,11 +48,32 @@ model MemoLink {
   url    String
   memoId String
   memo   Memo   @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@index([memoId])
 }
 
 model SerialCounter {
-  yearMonth String @id
-  lastValue Int    @default(0)
+  counterKey String @id
+  lastValue  Int    @default(0)
+}
+
+model IssuingOffice {
+  code      String   @id
+  name      String
+  createdAt DateTime @default(now())
+  memos     Memo[]
+
+  @@map("IssuingOffice")
+}
+
+model AdminConfig {
+  id               Int      @id @default(1)
+  adminPathHash    String?
+  adminPasswordHash String?
+  authVersion      Int      @default(0)
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  @@map("AdminConfig")
 }
 
 model LoginAttempt {
@@ -50,6 +81,8 @@ model LoginAttempt {
   ipAddress String
   timestamp DateTime @default(now())
   success   Boolean
+
+  @@index([ipAddress, timestamp])
 }
 
 model AuditLog {
@@ -62,4 +95,7 @@ model AuditLog {
   memoId    String?
   timestamp DateTime @default(now())
   memo      Memo?    @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@index([memoId, timestamp])
+  @@index([timestamp])
 }
