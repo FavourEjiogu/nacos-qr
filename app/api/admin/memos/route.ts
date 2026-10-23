@@ -126,38 +126,10 @@ export async function POST(req: NextRequest) {
 
     while (attempts < MAX_ATTEMPTS) {
       try {
-        const serialNumber = await generateSerialNumber({
-          visibility,
-          officeCode: issuingOffice.code,
-          issuedAt: parsedIssuedAt,
-        });
         const publicId = visibility === 'PUBLIC' ? generatePublicId(26) : null;
 
-        const memoData = {
-          publicId,
-          visibility,
-          officeCode: issuingOffice.code,
-          officeName: issuingOffice.name,
-          integrityVersion: 2,
-          serialNumber,
-          title,
-          body: memoBody,
-          issuer,
-          issuerPhone: issuerPhone ? String(issuerPhone).trim() : null,
-          addressedTo,
-          documentType,
-          issuedAt: parsedIssuedAt,
-          effectiveFrom: parsedEffectiveFrom,
-          expiresAt: parsedExpiresAt,
-          status: 'ACTIVE',
-          links: links && links.length > 0 ? links : undefined
-        };
-
-        const contentHash = generateMemoHash(memoData);
-
         memo = await prisma.$transaction(async (tx: any) => {
-          // Lock by code so concurrent first-time custom-office registrations
-          // cannot claim the same code for different office names.
+          // Serialize first-time office registration by code to prevent race conditions.
           await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${issuingOffice.code}, 0))`;
           const officeInTransaction = await tx.issuingOffice.findUnique({
             where: { code: issuingOffice.code },
@@ -172,18 +144,47 @@ export async function POST(req: NextRequest) {
             });
           }
 
+          // Allocate the sequence in the same transaction as the memo and audit row.
+          // If issuance fails, the counter change rolls back and no number is consumed.
+          const serialNumber = await generateSerialNumber({
+            visibility,
+            officeCode: issuingOffice.code,
+            issuedAt: parsedIssuedAt,
+          }, tx);
+
+          const memoData = {
+            publicId,
+            visibility,
+            officeCode: issuingOffice.code,
+            officeName: issuingOffice.name,
+            integrityVersion: 2,
+            serialNumber,
+            title,
+            body: memoBody,
+            issuer,
+            issuerPhone: issuerPhone ? String(issuerPhone).trim() : null,
+            addressedTo,
+            documentType,
+            issuedAt: parsedIssuedAt,
+            effectiveFrom: parsedEffectiveFrom,
+            expiresAt: parsedExpiresAt,
+            status: 'ACTIVE',
+            links: links && links.length > 0 ? links : undefined,
+          };
+
+          const contentHash = generateMemoHash(memoData);
           const createdMemo = await tx.memo.create({
             data: {
               ...memoData,
               summary,
               contentHash,
               links: memoData.links ? {
-                create: memoData.links.map((link: {label: string, url: string}) => ({
+                create: memoData.links.map((link: { label: string; url: string }) => ({
                   label: link.label,
-                  url: link.url
-                }))
-              } : undefined
-            }
+                  url: link.url,
+                })),
+              } : undefined,
+            },
           });
 
           await tx.auditLog.create({
@@ -191,13 +192,13 @@ export async function POST(req: NextRequest) {
               action: 'MEMO_CREATED',
               memoId: createdMemo.id,
               metadata: JSON.stringify({ visibility, officeCode: issuingOffice.code }),
-            }
+            },
           });
 
           return createdMemo;
         });
 
-        break; 
+        break;
       } catch (err: any) {
         if (err instanceof OfficeCodeConflictError) {
           return NextResponse.json({ error: err.message }, { status: 409 });
