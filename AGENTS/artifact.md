@@ -20,10 +20,11 @@ Move NACOS QR's PostgreSQL hosting from Neon to Supabase without changing memo-v
 - SQL count query returned 0 memos, 0 links, and 0 audit logs; two Prisma migration records are present.
 - Supabase security advisor reports one informational RLS-without-policy finding for `public._prisma_migrations`. This is intentional; migration metadata is not granted to runtime or public Data API roles.
 - Supabase performance advisor reports unused indexes because the new database has no workload yet; this is expected before launch.
-- Vercel created READY preview deployments for intermediate commits, but the final deployment/runtime and user flows have not been certified.
+- Latest Vercel preview deployment is READY, and GitHub Actions passed install, lint, all 9 regression tests, and the production build. This verifies the build pipeline, not database-backed runtime flows.
 - Vercel runtime/build-log calls returned 403; do not claim runtime tests passed.
 
 ## Remaining release blockers
+0. Upgrade and commit the checked-in dependency lockfile. The sandboxed dependency-upgrade experiment audited cleanly, but the production-safe lockfile upgrade is not in this branch and the GitHub CI does not yet gate on npm audit.
 1. Obtain the exact Supabase transaction and session pooler connection strings from the project's Connect dialog.
 2. Set `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED` in Vercel without exposing them to browser bundles.
 3. Reconcile the old Neon database and migrate any existing rows while preserving IDs, timestamps, serial counters, hashes, and relations.
