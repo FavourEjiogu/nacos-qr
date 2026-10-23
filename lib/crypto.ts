@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-export function generatePublicId(length = 8): string {
+export function generatePublicId(length = 26): string {
   const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   let id = '';
   for (let i = 0; i < length; i++) {
@@ -11,13 +11,12 @@ export function generatePublicId(length = 8): string {
 }
 
 export function canonicalizeMemoData(memoData: any): string {
-  // Normalize links if present
   const links = Array.isArray(memoData.links)
     ? memoData.links.map((l: any) => ({ label: l.label, url: l.url }))
     : [];
 
-  return JSON.stringify({
-    publicId: memoData.publicId,
+  const authoritativeFields = {
+    publicId: memoData.publicId ?? null,
     serialNumber: memoData.serialNumber,
     title: memoData.title,
     body: memoData.body,
@@ -28,6 +27,33 @@ export function canonicalizeMemoData(memoData: any): string {
     issuedAt: typeof memoData.issuedAt === 'string' ? memoData.issuedAt : memoData.issuedAt.toISOString(),
     effectiveFrom: typeof memoData.effectiveFrom === 'string' ? memoData.effectiveFrom : memoData.effectiveFrom.toISOString(),
     expiresAt: memoData.expiresAt ? (typeof memoData.expiresAt === 'string' ? memoData.expiresAt : memoData.expiresAt.toISOString()) : null,
+  };
+
+  // Version 1 is byte-for-byte compatible with previously issued references.
+  if ((memoData.integrityVersion ?? 1) < 2) {
+    return JSON.stringify({
+      publicId: memoData.publicId,
+      serialNumber: memoData.serialNumber,
+      title: memoData.title,
+      body: memoData.body,
+      issuer: memoData.issuer,
+      issuerPhone: memoData.issuerPhone || null,
+      addressedTo: memoData.addressedTo || memoData.department,
+      documentType: memoData.documentType || 'Other',
+      issuedAt: typeof memoData.issuedAt === 'string' ? memoData.issuedAt : memoData.issuedAt.toISOString(),
+      effectiveFrom: typeof memoData.effectiveFrom === 'string' ? memoData.effectiveFrom : memoData.effectiveFrom.toISOString(),
+      expiresAt: memoData.expiresAt ? (typeof memoData.expiresAt === 'string' ? memoData.expiresAt : memoData.expiresAt.toISOString()) : null,
+      status: 'ACTIVE',
+      links,
+    });
+  }
+
+  return JSON.stringify({
+    ...authoritativeFields,
+    visibility: memoData.visibility,
+    officeCode: memoData.officeCode,
+    officeName: memoData.officeName,
+    integrityVersion: 2,
     status: 'ACTIVE',
     links,
   });
