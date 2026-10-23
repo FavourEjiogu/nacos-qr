@@ -22,7 +22,7 @@ Examples:
 
 - Presidency public memo: `NACOS/BHU/PRES/PUB/2026/0001`
 - Secretariat public memo: `NACOS/BHU/SEC/PUB/2026/0001`
-- Presidency confidential letter: `NACOS/BHU/PRES/CONF/2026/ABCDE-FGHIJ-KLMNO-PQRST-UVWXYZ`
+- Presidency confidential letter: `NACOS/BHU/PRES/CONF/2026/23456-789AB-CDEFG-HJKLM-NPQRST`
 
 Public counters run separately by year and office. The Presidency's stable office code is `PRES`; other offices have their own code, such as `SEC` for the Secretariat. If you use “Other office / committee,” assign a distinct code and keep the office name consistent. The app rejects a code if it has already been used for a different office name.
 
