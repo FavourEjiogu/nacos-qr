@@ -1,15 +1,15 @@
 name: One-time dependency refresh
 
 on:
-  push:
-    branches: [migration/supabase-postgres]
+  pull_request:
+    types: [synchronize]
 
 permissions:
   contents: write
 
 jobs:
   refresh:
-    if: contains(github.event.head_commit.message, '[dependency-upgrade]')
+    if: contains(github.event.pull_request.body, '<!-- dependency-upgrade -->')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: migration/supabase-postgres
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -41,6 +41,8 @@ jobs:
           npm run build
 
       - name: Publish reviewed dependency manifest and lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -49,5 +51,6 @@ jobs:
             echo "Dependencies already match the audited lockfile."
           else
             git commit -m "Upgrade patched dependencies and regenerate package lock"
-            git push origin HEAD:migration/supabase-postgres
+            TOKEN_B64="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${TOKEN_B64}" push origin HEAD:migration/supabase-postgres
           fi
