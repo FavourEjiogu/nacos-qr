@@ -49,7 +49,14 @@ const mockState = vi.hoisted(() => {
       return memo;
     }),
     findUnique: vi.fn(async ({ where }: RecordData) => findMemo(where)),
-    findFirst: vi.fn(async ({ where }: RecordData) => findMemo(where)),
+    findFirst: vi.fn(async ({ where }: RecordData) => {
+      if (where.officeName?.not) {
+        return [...memos.values()].find((memo) =>
+          memo.officeCode === where.officeCode && memo.officeName !== where.officeName.not,
+        ) ?? null;
+      }
+      return findMemo(where);
+    }),
     findMany: vi.fn(async () => [...memos.values()]),
     update: vi.fn(async ({ where, data }: RecordData) => {
       const memo = findMemo(where);
@@ -345,6 +352,38 @@ describe('NACOS QR authentication and issuance APIs', () => {
     expect(mockState.auditLogs).toHaveLength(1);
     expect(mockState.auditLogs[0].action).toBe('MEMO_CREATED');
     expect(mockState.auditLogs[0].memoId).toBe(result.memo.id);
+  });
+
+  it('prevents reusing an issuing-office code for a different office name', async () => {
+    mockState.seedMemo(makeMemo({
+      id: 'existing-office-memo',
+      officeCode: 'COMMS',
+      officeName: 'Committee on Communications',
+    }));
+    const { POST } = await import('../app/api/admin/memos/route');
+    const { NextRequest } = await import('next/server');
+    vi.mocked(auth.isAuthenticated).mockResolvedValue(true);
+
+    const response = await POST(new NextRequest('http://localhost/api/admin/memos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Conflicting office code',
+        body: 'This must not be issued.',
+        issuer: 'Another Office',
+        documentType: 'Internal Memorandum',
+        addressedTo: 'Members',
+        visibility: 'PUBLIC',
+        officeCode: 'OTHER',
+        customOfficeCode: 'COMMS',
+        customOfficeName: 'Committee on Student Affairs',
+        issuedAt: '2026-10-22T00:00:00.000Z',
+        effectiveFrom: '2026-10-22T00:00:00.000Z',
+      }),
+    }));
+
+    expect(response.status).toBe(409);
+    expect(mockState.prisma.memo.create).not.toHaveBeenCalled();
   });
 
   it('keeps confidential records off public lookup and omits their public IDs', async () => {
