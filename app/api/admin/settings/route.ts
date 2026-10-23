@@ -11,7 +11,7 @@ const WINDOW_MS = 15 * 60 * 1000;
 
 function requestIp(req: NextRequest): string {
   return req.headers.get('x-real-ip')?.trim()
-    || req.headers.get('x-forwarded-for')?.split(',').map((value) => value.trim()).filter(Boolean)[0]
+    || req.headers.get('x-forwarded-for')?.split(',').map((value) => value.trim()).filter(Boolean).at(-1)
     || 'unknown';
 }
 
