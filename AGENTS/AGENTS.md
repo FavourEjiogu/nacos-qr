@@ -19,13 +19,16 @@ Official NACOS memo-verification system. Administrators issue authoritative memo
 - The app uses `SUPABASE_DATABASE_URL` (least-privilege `nacos_app` runtime role) and `SUPABASE_DATABASE_URL_UNPOOLED` (database-owner migration role); the existing Neon-managed `DATABASE_URL` variables remain untouched as a fallback. Supabase's exact transaction/session pooler hosts must be copied from the Connect dialog; never guess the pooler hostname.
 - Keep the existing Neon database intact until old records are reconciled and production smoke tests pass.
 
-## Release status (2026-10-23)
-- Supabase project exists and initial schema is applied.
+## Release status (2026-10-23, updated)
+- Supabase project exists; the initial schema and privacy-safe reference/admin-settings migration are applied.
 - Schema and Prisma migration history were checked through Supabase SQL tools.
-- The fresh Supabase database currently contains zero memo, memo-link, and audit-log rows; source Neon row counts have not been reconciled.
-- Vercel production has not yet been switched to Supabase: the two Supabase connection variables are not configured yet.
+- Supabase currently has zero memo, link, serial-counter, login-attempt, and audit-log rows; source Neon row counts have not been reconciled.
+- Vercel production has not yet been switched to Supabase: `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED` are not configured yet.
 - Vercel logs APIs returned 403; production runtime behavior is not certified.
-- PR #1 is open and must not be merged until connection configuration, data reconciliation, and end-to-end smoke tests are complete.
+- PR #1 remains open; do not merge until connection configuration, data reconciliation, and live smoke tests are complete.
+- Issuance separates PUBLIC and CONFIDENTIAL records. Confidential records have no public ID/QR and public lookups filter to PUBLIC records only.
+- Reference format: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<SEQUENCE>` or `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<RANDOM-TOKEN>`.
+- Admin settings support password changes, URL rotation, and `/admin/recover` recovery.
 
 ## Commands
 ```bash
