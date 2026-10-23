@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { generateSerialNumber } from '@/lib/serial';
 import { generateMemoHash, generatePublicId } from '@/lib/crypto';
 import { isAuthenticated } from '@/lib/auth';
+import { resolveIssuingOffice } from '@/lib/offices';
 
 export async function POST(req: NextRequest) {
   if (!(await isAuthenticated(req))) {
@@ -18,7 +19,17 @@ export async function POST(req: NextRequest) {
     const {
       title, summary, body: memoBody, issuer, addressedTo, documentType,
       issuerPhone, issuedAt, effectiveFrom, expiresAt, links,
+      visibility, officeCode, customOfficeCode, customOfficeName,
     } = body;
+
+    if (visibility !== 'PUBLIC' && visibility !== 'CONFIDENTIAL') {
+      return NextResponse.json({ error: 'Choose whether this record is public or confidential.' }, { status: 400 });
+    }
+
+    const issuingOffice = resolveIssuingOffice(officeCode, customOfficeCode, customOfficeName);
+    if (!issuingOffice) {
+      return NextResponse.json({ error: 'Choose a valid issuing office and office code.' }, { status: 400 });
+    }
 
     const requiredTextFields = [
       ['title', title, 255],
@@ -85,21 +96,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const parsedIssuedAt = new Date(issuedAt);
+    const parsedEffectiveFrom = new Date(effectiveFrom);
+    const parsedExpiresAt = expiresAt ? new Date(expiresAt) : null;
+
     let memo;
     let attempts = 0;
     const MAX_ATTEMPTS = 5;
 
     while (attempts < MAX_ATTEMPTS) {
       try {
-        const serialNumber = await generateSerialNumber();
-        const publicId = generatePublicId(8);
-        
-        const parsedIssuedAt = new Date(issuedAt);
-        const parsedEffectiveFrom = new Date(effectiveFrom);
-        const parsedExpiresAt = expiresAt ? new Date(expiresAt) : null;
-        
+        const serialNumber = await generateSerialNumber({
+          visibility,
+          officeCode: issuingOffice.code,
+          issuedAt: parsedIssuedAt,
+        });
+        const publicId = visibility === 'PUBLIC' ? generatePublicId(26) : null;
+
         const memoData = {
           publicId,
+          visibility,
+          officeCode: issuingOffice.code,
+          officeName: issuingOffice.name,
+          integrityVersion: 2,
           serialNumber,
           title,
           body: memoBody,
@@ -135,6 +154,7 @@ export async function POST(req: NextRequest) {
             data: {
               action: 'MEMO_CREATED',
               memoId: createdMemo.id,
+              metadata: JSON.stringify({ visibility, officeCode: issuingOffice.code }),
             }
           });
 
