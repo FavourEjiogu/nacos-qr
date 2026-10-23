@@ -1,24 +1,31 @@
-// fix: use prisma singleton, remove direct PrismaClient instantiation
 import { prisma } from '@/lib/prisma';
+import { generatePublicId } from '@/lib/crypto';
 
-export async function generateSerialNumber(): Promise<string> {
-  const date = new Date();
-  const yy = String(date.getFullYear()).slice(-2);
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yearMonth = `${yy}${mm}`;
-  const prefix = `NACOSBHU/${yy}/${mm}/`;
+export type MemoVisibility = 'PUBLIC' | 'CONFIDENTIAL';
 
+export async function generateSerialNumber(input: {
+  visibility: MemoVisibility;
+  officeCode: string;
+  issuedAt?: Date;
+}): Promise<string> {
+  const { visibility, officeCode, issuedAt = new Date() } = input;
+  const year = String(issuedAt.getFullYear());
+  const normalizedCode = officeCode.trim().toUpperCase();
+  const prefix = `NACOS/BHU/${normalizedCode}/${visibility === 'PUBLIC' ? 'PUB' : 'CONF'}/${year}`;
+
+  // Private correspondence must never use predictable counters or public verification IDs.
+  if (visibility === 'CONFIDENTIAL') {
+    const token = generatePublicId(26);
+    return `${prefix}/${token.slice(0, 5)}-${token.slice(5, 10)}-${token.slice(10, 15)}-${token.slice(15, 20)}-${token.slice(20)}`;
+  }
+
+  // The counter key scopes each public series by year and issuing office.
+  const counterKey = `PUBLIC:${normalizedCode}:${year}`;
   const counter = await prisma.serialCounter.upsert({
-    where: { yearMonth },
-    update: {
-      lastValue: { increment: 1 }
-    },
-    create: {
-      yearMonth,
-      lastValue: 1
-    }
+    where: { counterKey },
+    update: { lastValue: { increment: 1 } },
+    create: { counterKey, lastValue: 1 },
   });
 
-  const formattedNumber = String(counter.lastValue).padStart(4, '0');
-  return `${prefix}${formattedNumber}`;
+  return `${prefix}/${String(counter.lastValue).padStart(4, '0')}`;
 }
