@@ -30,7 +30,6 @@
 - **Remediation:** Use a read-only count comparison before cutover. If the source is empty, record that evidence; otherwise perform a preserve-ID/time/hash/link migration and verify counts.
 - **Status:** OPEN.
 
-### LOW — Custom office codes are guarded at issue time
-- **Observation:** A code may be used only for one office name; the API rejects reuse when an existing memo proves the code is bound to another name.
-- **Residual risk:** Concurrent first-time custom-office creation could still race because the office registry is application-owned rather than a separate normalized table.
-- **Mitigation:** Keep office-code selection limited to designated administrators and use the predefined list wherever possible.
+### MITIGATED — Custom office code collision
+- **Observation:** Office codes are primary keys in the persistent IssuingOffice registry. Issuance takes a transaction-scoped advisory lock by code, rechecks the registered name, and writes the memo, serial counter, and audit record in one transaction.
+- **Mitigation:** The database foreign key prevents memos from referencing unregistered offices; a name/code mismatch returns HTTP 409. Continue to use the predefined office list where possible.
