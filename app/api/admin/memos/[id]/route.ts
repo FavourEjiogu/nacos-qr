@@ -38,7 +38,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       return updatedMemo;
     });
 
-    revalidatePath(`/verify/${memo.publicId}`);
+    if (memo.publicId && memo.visibility === 'PUBLIC') {
+      revalidatePath(`/verify/${memo.publicId}`);
+    }
 
     return NextResponse.json({ success: true, memo });
   } catch {
