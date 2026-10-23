@@ -7,7 +7,9 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function POST(req: NextRequest) {
   // Get IP for rate limiting
-  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  // Use the proxy-appended right-most value rather than trusting a client-supplied first item.
+  const ip = forwardedFor?.split(',').map((value) => value.trim()).filter(Boolean).at(-1) || 'unknown';
   const now = new Date();
   const windowStart = new Date(now.getTime() - WINDOW_MS);
   
@@ -29,8 +31,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Extract and verify password
-    const { password } = await req.json();
-    const isValid = await verifyPassword(password);
+    const body = await req.json();
+    if (!body || typeof body !== 'object' || Array.isArray(body) ||
+        typeof body.password !== 'string' || body.password.length === 0 || body.password.length > 1024) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+    const isValid = await verifyPassword(body.password);
     
     // 3. Log the attempt
     await prisma.loginAttempt.create({
@@ -62,8 +68,12 @@ export async function POST(req: NextRequest) {
       }
     });
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-  } catch (err: any) {
-    console.error("Auth error:", err);
-    return NextResponse.json({ error: err.message || 'Invalid request body' }, { status: 400 });
+  } catch (err: unknown) {
+    console.error('Authentication service error:', err);
+    const malformedBody = err instanceof SyntaxError;
+    return NextResponse.json(
+      { error: malformedBody ? 'Invalid request body' : 'Authentication service unavailable' },
+      { status: malformedBody ? 400 : 500 },
+    );
   }
 }
