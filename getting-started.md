@@ -76,7 +76,7 @@ Required values:
 - `APP_SECRET`: the long-lived HMAC key for memo integrity. Do **not** rotate it during migration.
 - `NEXT_PUBLIC_VERIFY_BASE_URL`: canonical public origin, `https://nacos-qr.vercel.app` in production or `http://localhost:3000` locally.
 
-In Supabase Dashboard, open **Connect** and copy the actual shared pooler host from the connection string. Do not construct it from the region; the pooler cluster index varies by project. Percent-encode reserved characters in passwords. Never use a `NEXT_PUBLIC_` prefix for database credentials.
+The Supabase pooler host confirmed for this project is `aws-1-eu-central-1.pooler.supabase.com`. The runtime uses `nacos_app.ayatnoolplaimcokvsfs` on the Transaction pooler, not the more privileged `postgres` user. The Session pooler uses `postgres.ayatnoolplaimcokvsfs` for Prisma migrations. Enter the actual passwords only in Supabase/Vercel secure settings, percent-encoding reserved characters. Never use a `NEXT_PUBLIC_` prefix for database credentials.
 
 The existing Neon-managed `DATABASE_URL` variables are intentionally preserved until source data and runtime flows have been reconciled. The app uses the Supabase-specific variables only.
 
