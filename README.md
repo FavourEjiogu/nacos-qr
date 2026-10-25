@@ -1,6 +1,6 @@
 # NACOS QR — Official Memo Verification
 
-NACOS QR is the official NACOS document-verification system. Administrators create authoritative memo records with an issuing office, a human-readable reference, a visibility classification, and a server-side HMAC-SHA256 integrity signature. Public records receive an unguessable verification ID and QR. Confidential records receive a different, cryptographically random reference and are never published to the public verification route.
+NACOS QR is the official NACOS document-verification system. Administrators create authoritative memo records with an issuing office, a human-readable reference, a visibility classification, and a server-side HMAC-SHA256 integrity signature. Public records receive an unguessable verification ID and QR. Confidential records receive a separate cryptographically random reference and a QR that verifies the exact record without adding it to any public directory or listing.
 
 ## What it does
 
@@ -22,7 +22,7 @@ The QR code is a pointer to the canonical verification record; it does not conta
 
 The integrity signature covers the authoritative memo content. Operational status such as revocation is deliberately not part of the content signature, so a valid historical signature can still be checked after a memo is revoked.
 
-Verification confirms that the authoritative public database record has not been altered without the signing secret. It does **not** by itself prove that a physical or uploaded copy of a document was not altered. Users should compare the verified record with the document they received. Confidential records have no public verification ID or QR, and public lookups explicitly filter to records classified `PUBLIC`. Unpredictable confidential references provide additional resistance to guessing; access control—not secrecy of a reference—is what keeps private content out of the public verifier.
+Verification confirms that the authoritative database record has not been altered without the signing secret. It does **not** by itself prove that a physical or uploaded copy of a document was not altered. Users should compare the verified record with the document they received. Public records can be verified by their public ID or exact serial. Confidential records have no public ID, public directory listing, or predictable serial; the exact random serial or QR opens their verification record. This is **bearer-reference access**, not strict access control: anyone who obtains a confidential serial or QR can view its record, so share it only with authorised recipients. Use a separate private document-delivery channel for sensitive material that must remain private even if a reference is forwarded.
 
 Administrative authentication uses a bcrypt password hash, signed HttpOnly session cookies, SameSite protection, and login rate limiting. Required secrets are fail-closed.
 
@@ -38,9 +38,9 @@ Administrative authentication uses a bcrypt password hash, signed HttpOnly sessi
 
 ## Reference-number policy
 
-Public references are sequential within the issuing-office/year series. For example, the Presidency starts a series like `NACOS/BHU/PRES/PUB/2026/0001`; the Secretariat uses `NACOS/BHU/SEC/PUB/2026/0001`. The office code is stable and recorded on the memo, so references identify both the issuing office and the document's public classification.
+Public references use the format `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>`. For example, the Presidency's October series begins `NACOS/BHU/PRES/PUB/2026/10/0001`, while a November issue starts the separate `NACOS/BHU/PRES/PUB/2026/11/0001` series. The sequence key includes office, UTC year, and two-digit month, so transitions are deterministic and do not rely on a manually reset counter. The month/year come from the recorded issue date. The office code is stable and recorded on the memo.
 
-Confidential correspondence uses a separate series, such as `NACOS/BHU/PRES/CONF/2026/23456-789AB-CDEFG-HJKLM-NPQRST`. The final token is generated from cryptographically secure randomness. A confidential record receives **no public verification ID and no public QR**. Entering its serial in the public verifier returns “Record not found,” even if someone learns the reference. Choose **Confidential** for private letters; do not rely on the document-type label to make a record private.
+Confidential correspondence uses `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`, for example `NACOS/BHU/PRES/CONF/2026/10/23456-789AB-CDEFG-HJKLM-NPQRST`. The token contains 26 characters generated from cryptographically secure randomness. Confidential records have **no public verification ID**, but they do have a QR and exact-reference verification URL. There is no directory listing or sequential confidential counter; an exact random serial verifies the record. Anyone possessing that reference/QR can see the verification record, so treat it as a bearer key and share it only with the intended recipient.
 
 The Presidency's office code is `PRES`. Other registered office codes distinguish their own public and confidential series. Office code reuse for a different office name is rejected to preserve a stable audit trail.
 
