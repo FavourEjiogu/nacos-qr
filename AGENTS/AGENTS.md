@@ -26,8 +26,8 @@ Official NACOS memo-verification system. Administrators issue authoritative memo
 - Vercel production has not yet been switched to Supabase: `SUPABASE_DATABASE_URL` and `SUPABASE_DATABASE_URL_UNPOOLED` are not configured yet.
 - Vercel logs APIs returned 403; production runtime behavior is not certified.
 - PR #1 remains open; do not merge until connection configuration, Neon data reconciliation, and database-backed smoke tests are complete.
-- Issuance separates PUBLIC and CONFIDENTIAL records. Confidential records have no public ID/QR and public lookups filter to PUBLIC records only.
-- Reference format: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<SEQUENCE>` or `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<RANDOM-TOKEN>`.
+- Issuance separates PUBLIC and CONFIDENTIAL records. Public references are `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>`; confidential references are `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`. Both have QR/reference verification; confidential records are not listed but their exact random reference is bearer access to the record.
+- Reference format: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>` or `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`. The counter key contains office + UTC year + month.
 - Admin settings support password changes, URL rotation, and `/admin/recover` recovery.
 
 ## Commands
