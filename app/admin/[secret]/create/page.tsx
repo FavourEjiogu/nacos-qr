@@ -7,6 +7,14 @@ import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import { ISSUING_OFFICES } from '@/lib/offices';
 
+function getLocalDateInput(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export default function CreateMemo() {
   const { logout } = useAuth();
   const { secret } = useParams<{secret: string}>();
@@ -24,7 +32,7 @@ export default function CreateMemo() {
   const [issuer, setIssuer] = useState('');
   const [issuerPhone, setIssuerPhone] = useState('');
   const [addressedTo, setAddressedTo] = useState('');
-  const [issuedAt, setIssuedAt] = useState('');
+  const [issuedAt, setIssuedAt] = useState<string>(() => getLocalDateInput());
   const [effectiveFrom, setEffectiveFrom] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
 
