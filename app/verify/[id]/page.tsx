@@ -4,24 +4,30 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function VerifyPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const decodedId = decodeURIComponent(params.id).trim();
 
-  // If it contains a slash, it's a serial number. Redirect to canonical publicId URL.
-  if (decodedId.includes('/')) {
-    const memoBySerial = await prisma.memo.findFirst({
-      where: { serialNumber: decodedId, visibility: 'PUBLIC' }
-    });
-    if (memoBySerial?.publicId) {
-      redirect(`/verify/${memoBySerial.publicId}`);
-    }
+  // Public IDs and exact serial references are the only lookup mechanisms.
+  // A confidential serial acts as a bearer reference; records are never listed.
+  const memoBySerial = decodedId.includes('/')
+    ? await prisma.memo.findFirst({
+        where: { serialNumber: decodedId },
+        include: { links: true },
+      })
+    : null;
+
+  if (memoBySerial?.visibility === 'PUBLIC' && memoBySerial.publicId) {
+    redirect(`/verify/${memoBySerial.publicId}`);
   }
 
-  const memo = await prisma.memo.findFirst({
+  const memo = memoBySerial ?? await prisma.memo.findFirst({
     where: { publicId: decodedId, visibility: 'PUBLIC' },
-    include: { links: true }
+    include: { links: true },
   });
 
   if (!memo) {
@@ -84,12 +90,27 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
         )}
 
         <div style={{ marginTop: '16px', padding: '16px', background: 'var(--secondary)', borderRadius: '4px', textAlign: 'left' }}>
-          <p className="text-sm" style={{ fontWeight: 500 }}>This is the official NACOS record associated with this verification ID.</p>
+          <p className="text-sm" style={{ fontWeight: 500 }}>This is the official NACOS record associated with this verification reference.</p>
           {!isDanger && !isWarning && (
             <p className="text-sm" style={{ marginTop: '8px' }}>Compare the details on this page with the document you received before relying on it.</p>
           )}
         </div>
       </div>
+
+      {memo.visibility === 'CONFIDENTIAL' && (
+        <div role="note" className="mb-6" style={{
+          border: '1px solid var(--warning)',
+          borderRadius: '8px',
+          padding: '16px',
+          background: 'var(--secondary)',
+        }}>
+          <p style={{ fontWeight: 700, marginBottom: '6px' }}>CONFIDENTIAL — VERIFY BY PRIVATE REFERENCE</p>
+          <p className="text-sm">
+            This record is not discoverable through public-ID search or a document list. The full reference and its QR act as a bearer key:
+            anyone who obtains them can view this verification record. Share them only with the intended recipient.
+          </p>
+        </div>
+      )}
 
       <div className="card" style={{ opacity: (isDanger || isWarning) ? 0.9 : 1 }}>
         <div className="mb-6">
@@ -103,6 +124,11 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
             <div className="mono" style={{ fontSize: '16px', fontWeight: 500 }}>{memo.publicId}</div>
           </div>
         )}
+
+        <div className="mb-6">
+          <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Classification</div>
+          <div style={{ fontSize: '16px', fontWeight: 600 }}>{memo.visibility === 'CONFIDENTIAL' ? 'Confidential — private-reference verification' : 'Public verification'}</div>
+        </div>
 
         <div className="mb-6">
           <div className="text-sm mb-1" style={{ textTransform: 'uppercase', fontWeight: 500 }}>Issuing Office</div>
