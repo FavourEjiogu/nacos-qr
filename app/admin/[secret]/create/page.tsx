@@ -92,7 +92,9 @@ export default function CreateMemo() {
   if (successData) {
     const baseUrl = process.env.NEXT_PUBLIC_VERIFY_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const isPublic = successData.visibility === 'PUBLIC' && Boolean(successData.publicId);
-    const verifyUrl = isPublic ? `${baseUrl}/verify/${successData.publicId}` : '';
+    const verificationUrl = isPublic
+      ? `${baseUrl}/verify/${successData.publicId}`
+      : `${baseUrl}/verify/${encodeURIComponent(successData.serialNumber)}`;
     
     return (
       <div className="container" style={{ maxWidth: '800px' }}>
@@ -102,42 +104,39 @@ export default function CreateMemo() {
           </h2>
           {!isPublic && (
             <p className="text-sm mb-6" role="status">
-              This reference is private. It cannot be found through public NACOS QR verification, and no public QR or verification URL was created.
+              This record is verifiable by its random reference. The reference and QR act as a bearer key: anyone who obtains them can view the record, so share them only with the intended recipient.
             </p>
           )}
           
           <div className="mb-8" style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '16px' }}>
             <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Reference:</span> <span className="mono font-medium">{successData.serialNumber}</span></div>
             <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Issuing Office:</span> <span className="font-medium">{successData.officeName} ({successData.officeCode})</span></div>
-            <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Classification:</span> <span className="font-medium">{isPublic ? 'Publicly verifiable' : 'Confidential / admin-only'}</span></div>
+            <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Classification:</span> <span className="font-medium">{isPublic ? 'Public verification' : 'Confidential — random-reference verification'}</span></div>
             {isPublic && <div><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Verification ID:</span> <span className="mono font-medium">{successData.publicId}</span></div>}
-            {isPublic && <div style={{ wordBreak: 'break-all' }}><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Verification URL:</span> <span className="font-medium">{verifyUrl}</span></div>}
+            <div style={{ wordBreak: 'break-all' }}><span className="text-sm" style={{ textTransform: 'uppercase', marginRight: '8px' }}>Verification URL:</span> <span className="font-medium">{verificationUrl}</span></div>
           </div>
 
-          {isPublic && (
-            <div style={{ background: '#fff', padding: '16px', display: 'inline-block', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '32px' }}>
-              <QRCodeSVG id={`qr-${successData.id}`} value={verifyUrl} size={200} level="H" />
-            </div>
-          )}
+          <div style={{ background: '#fff', padding: '16px', display: 'inline-block', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '32px' }}>
+            <QRCodeSVG id={`qr-${successData.id}`} value={verificationUrl} size={200} level="H" />
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {isPublic ? (
-              <>
-                <button onClick={() => downloadQRSVG(successData.id, successData.serialNumber)} className="btn">
-                  Download QR
-                </button>
-                <button onClick={() => { void navigator.clipboard.writeText(verifyUrl); }} className="btn btn-secondary">
-                  Copy verification URL
-                </button>
-                <a href={verifyUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
-                  Open verification page
-                </a>
-              </>
-            ) : (
-              <button onClick={() => { void navigator.clipboard.writeText(successData.serialNumber); }} className="btn btn-secondary">
-                Copy confidential reference
+            <>
+              <button onClick={() => downloadQRSVG(successData.id, successData.serialNumber)} className="btn">
+                Download verification QR
               </button>
-            )}
+              <button onClick={() => { void navigator.clipboard.writeText(verificationUrl); }} className="btn btn-secondary">
+                Copy verification URL
+              </button>
+              <a href={verificationUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                Open verification page
+              </a>
+              {!isPublic && (
+                <button onClick={() => { void navigator.clipboard.writeText(successData.serialNumber); }} className="btn btn-secondary">
+                  Copy confidential reference
+                </button>
+              )}
+            </>
             <Link href={`/admin/${secret}`} className="btn btn-secondary">
               Back to Registry
             </Link>
@@ -166,7 +165,7 @@ export default function CreateMemo() {
             <label htmlFor="visibility">Publication & confidentiality</label>
             <select id="visibility" className="input" value={visibility} onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'CONFIDENTIAL')} required>
               <option value="PUBLIC">Public — publish a QR verification record</option>
-              <option value="CONFIDENTIAL">Confidential — private register only, no public QR</option>
+              <option value="CONFIDENTIAL">Confidential — verifiable by random reference/QR</option>
             </select>
             <p className="text-sm" style={{ marginTop: '6px' }}>
               Confidential records are excluded from public lookup even if someone learns their reference number. Do not select Public for private letters.
