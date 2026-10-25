@@ -282,7 +282,7 @@ describe('NACOS QR reference numbering', () => {
       generateSerialNumber({ visibility: 'PUBLIC', officeCode: 'PRES', issuedAt }),
     ]);
     expect(new Set(serials).size).toBe(3);
-    serials.forEach((serial) => expect(serial).toMatch(/^NACOS\/BHU\/PRES\/PUB\/2026\/\d{4,}$/));
+    serials.forEach((serial) => expect(serial).toMatch(/^NACOS\/BHU\/PRES\/PUB\/2026\/10\/\d{4,}$/));
   });
 
   it('starts a new public sequence on month and year boundaries without resetting older months', async () => {
@@ -316,7 +316,7 @@ describe('NACOS QR reference numbering', () => {
       officeCode: 'PRES',
       issuedAt: new Date('2026-10-22T00:00:00.000Z'),
     });
-    expect(first).toMatch(/^NACOS\/BHU\/PRES\/CONF\/2026\/[23456789ABCDEFGHJKLMNPQRSTUVWXYZ-]+$/);
+    expect(first).toMatch(/^NACOS\/BHU\/PRES\/CONF\/2026\/10\/[23456789ABCDEFGHJKLMNPQRSTUVWXYZ-]+$/);
     expect(first).not.toBe(second);
     expect(mockState.prisma.serialCounter.upsert).toHaveBeenCalledTimes(before);
   });
@@ -390,7 +390,7 @@ describe('NACOS QR authentication and issuance APIs', () => {
     expect(result.success).toBe(true);
     expect(result.memo.visibility).toBe('PUBLIC');
     expect(result.memo.officeCode).toBe('PRES');
-    expect(result.memo.serialNumber).toMatch(/^NACOS\/BHU\/PRES\/PUB\/2026\/\d{4,}$/);
+    expect(result.memo.serialNumber).toMatch(/^NACOS\/BHU\/PRES\/PUB\/2026\/10\/\d{4,}$/);
     expect(result.memo.publicId).toHaveLength(26);
     expect(result.memo.contentHash).toMatch(/^[a-f0-9]{64}$/);
     expect(mockState.auditLogs).toHaveLength(1);
@@ -449,7 +449,7 @@ describe('NACOS QR authentication and issuance APIs', () => {
     const result = await response.json();
     expect(result.memo.visibility).toBe('CONFIDENTIAL');
     expect(result.memo.publicId).toBeNull();
-    expect(result.memo.serialNumber).toMatch(/^NACOS\/BHU\/PRES\/CONF\/2026\/[23456789ABCDEFGHJKLMNPQRSTUVWXYZ-]+$/);
+    expect(result.memo.serialNumber).toMatch(/^NACOS\/BHU\/PRES\/CONF\/2026\/10\/[23456789ABCDEFGHJKLMNPQRSTUVWXYZ-]+$/);
     mockState.seedMemo(result.memo);
 
     const verificationPage = await import('../app/verify/[id]/page');
