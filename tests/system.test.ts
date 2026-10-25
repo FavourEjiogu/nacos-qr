@@ -274,7 +274,7 @@ describe('Issuing-office registry', () => {
 });
 
 describe('NACOS QR reference numbering', () => {
-  it('generates atomic public serials scoped by year and office', async () => {
+  it('generates atomic public serials scoped by year, month, and office', async () => {
     const issuedAt = new Date('2026-10-22T00:00:00.000Z');
     const serials = await Promise.all([
       generateSerialNumber({ visibility: 'PUBLIC', officeCode: 'PRES', issuedAt }),
@@ -426,7 +426,7 @@ describe('NACOS QR authentication and issuance APIs', () => {
     expect(mockState.prisma.memo.create).not.toHaveBeenCalled();
   });
 
-  it('keeps confidential records off public lookup and omits their public IDs', async () => {
+  it('verifies confidential records by exact random reference without assigning public IDs', async () => {
     const { POST } = await import('../app/api/admin/memos/route');
     const { NextRequest } = await import('next/server');
     vi.mocked(auth.isAuthenticated).mockResolvedValue(true);
@@ -452,9 +452,9 @@ describe('NACOS QR authentication and issuance APIs', () => {
     expect(result.memo.serialNumber).toMatch(/^NACOS\/BHU\/PRES\/CONF\/2026\/10\/[23456789ABCDEFGHJKLMNPQRSTUVWXYZ-]+$/);
     mockState.seedMemo(result.memo);
 
-    const verificationPage = await import('../app/verify/[id]/page');
+    const verificationPage = await import('../app/verify/page');
     const verification = await verificationPage.default({
-      params: Promise.resolve({ id: encodeURIComponent(result.memo.serialNumber) }),
+      searchParams: Promise.resolve({ ref: result.memo.serialNumber }),
     });
     expect(JSON.stringify(verification)).toContain('CONFIDENTIAL');
     expect(JSON.stringify(verification)).toContain('VERIFIED — ACTIVE');
