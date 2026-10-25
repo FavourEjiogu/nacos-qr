@@ -94,7 +94,7 @@ export default function CreateMemo() {
     const isPublic = successData.visibility === 'PUBLIC' && Boolean(successData.publicId);
     const verificationUrl = isPublic
       ? `${baseUrl}/verify/${successData.publicId}`
-      : `${baseUrl}/verify/${encodeURIComponent(successData.serialNumber)}`;
+      : `${baseUrl}/verify?ref=${encodeURIComponent(successData.serialNumber)}`;
     
     return (
       <div className="container" style={{ maxWidth: '800px' }}>
