@@ -27,7 +27,7 @@ Official NACOS memo-verification system. Administrators issue authoritative memo
 - Vercel logs APIs returned 403; production runtime behavior is not certified.
 - PR #1 remains open; do not merge until connection configuration, Neon data reconciliation, and database-backed smoke tests are complete.
 - Issuance separates PUBLIC and CONFIDENTIAL records. Public references are `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>`; confidential references are `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`. Both have QR/reference verification; confidential records are not listed but their exact random reference is bearer access to the record.
-- Reference format: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>` or `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`. The counter key contains office + UTC year + month.
+- Reference format: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>` or `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`. The public counter key contains office + UTC year + month. Confidential serials include month/year but use a cryptographically random 26-character token.
 - Admin settings support password changes, URL rotation, and `/admin/recover` recovery.
 
 ## Commands
