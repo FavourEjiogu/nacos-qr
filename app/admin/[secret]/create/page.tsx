@@ -281,7 +281,11 @@ export default function CreateMemo() {
                 value={issuedAt} 
                 onChange={e => setIssuedAt(e.target.value)} 
                 required 
+                aria-describedby="reference-period-help"
               />
+              <p id="reference-period-help" className="text-sm" style={{ marginTop: '6px' }}>
+                The reference month and year follow this date. For example, October uses /2026/10/ and November uses /2026/11/ with a new monthly counter. Backdated issues use the selected month.
+              </p>
             </div>
             <div>
               <label>Effective Date (Optional)</label>
