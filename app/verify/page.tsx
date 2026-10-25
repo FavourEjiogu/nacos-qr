@@ -1,4 +1,4 @@
-import VerifyPage from './[id]/page';
+import VerificationRecord from './VerificationRecord';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -11,6 +11,5 @@ export default async function VerifyReferencePage(props: {
 }) {
   const { ref } = await props.searchParams;
   const reference = typeof ref === 'string' ? ref.trim() : '';
-
-  return <VerifyPage params={Promise.resolve({ id: reference })} />;
+  return <VerificationRecord identifier={reference} />;
 }
