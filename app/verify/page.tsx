@@ -1,4 +1,4 @@
-import VerificationRecord from './VerificationRecord';
+import VerificationRecord from './verification-record';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
