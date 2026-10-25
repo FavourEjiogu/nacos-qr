@@ -6,27 +6,28 @@ NACOS QR is the official NACOS document register and public verification system.
 
 There are two separate issuance paths:
 
-- **Public:** use only when NACOS intends the record to be publicly verifiable. It gets a sequential office/year reference, a random public verification ID, and a QR/link.
-- **Confidential:** use for private letters or correspondence. It gets a separate cryptographically random reference, but no public verification ID, QR, or verification URL. The public verifier explicitly filters out confidential records.
+- **Public:** it gets an office/year/month sequential reference, a random public verification ID, and a QR/link.
+- **Confidential:** it gets an office/year/month reference with a cryptographically random 26-character token and a QR/link that verifies the exact record. It has no public verification ID and is not listed in a directory; only someone who knows the exact random reference can retrieve it.
 
-**Visibility is not the same as document type.** A letter described as “External Communication” may still be confidential. Select Confidential whenever its contents should not be searchable or retrievable through NACOS QR.
+**Visibility is not the same as document type.** A letter described as “External Communication” may still be confidential. Confidential-reference verification is a bearer-key model: anyone who obtains the exact serial or QR can read the stored verification record. Do not use this mode for material that must remain inaccessible after its reference is forwarded; deliver such documents through a separate private channel.
 
 ## 2. Reference-number policy
 
 The format is:
 
-- Public: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<SEQUENCE>`
-- Confidential: `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<RANDOM-TOKEN>`
+- Public: `NACOS/BHU/<OFFICE>/PUB/<YEAR>/<MONTH>/<SEQUENCE>`
+- Confidential: `NACOS/BHU/<OFFICE>/CONF/<YEAR>/<MONTH>/<RANDOM-TOKEN>`
 
 Examples:
 
-- Presidency public memo: `NACOS/BHU/PRES/PUB/2026/0001`
-- Secretariat public memo: `NACOS/BHU/SEC/PUB/2026/0001`
-- Presidency confidential letter: `NACOS/BHU/PRES/CONF/2026/23456-789AB-CDEFG-HJKLM-NPQRST`
+- Presidency public memo in October: `NACOS/BHU/PRES/PUB/2026/10/0001`
+- Presidency public memo in November: `NACOS/BHU/PRES/PUB/2026/11/0001`
+- Secretariat public memo in October: `NACOS/BHU/SEC/PUB/2026/10/0001`
+- Presidency confidential letter: `NACOS/BHU/PRES/CONF/2026/10/23456-789AB-CDEFG-HJKLM-NPQRST`
 
-Public counters run separately by year and office. The Presidency's stable office code is `PRES`; other offices have their own code, such as `SEC` for the Secretariat. If you use “Other office / committee,” assign a distinct code and keep the office name consistent. The app rejects a code if it has already been used for a different office name.
+Public counters run separately for each office, UTC year and month. The month is taken automatically from the recorded issue date and padded to two digits; for example, October is `10`, November is `11`, and January is `01`. Each office/month/year has its own counter, so October `0002` is unaffected by the November counter beginning at `0001`. When the issue date crosses into another year, the new year's month series starts independently. If an authorised administrator intentionally backdates the issue date, the reference follows that entered date.
 
-Confidential references use 26 characters generated from cryptographically secure randomness and grouped for readability. They do not use the sequential public counter. Even if a student learns or guesses a confidential reference, public lookup will return “Record not found”; confidential content is never exposed by the public verifier. The unpredictable reference adds defence in depth, but the actual privacy guarantee is the server-side visibility filter and admin authentication.
+Confidential references use 26 characters generated from cryptographically secure randomness and grouped for readability. They do not use the sequential public counter or a public verification ID. The serial is accepted for exact-match verification, and a QR is generated for convenience. No general registry listing or sequential search can reveal them, but possession of the exact reference/QR enables access to the verification record. Share it only with authorised recipients; this is not encryption or recipient authentication.
 
 ## 3. Routes
 
@@ -45,7 +46,7 @@ Do not share the private admin URL in public groups. It is a discovery barrier, 
 4. Select the issuing office. Use the stable Presidency code `PRES` for documents issued by the President's office. Other offices use their designated code.
 5. Enter the actual approved title, issuer, recipient, issue/effective/expiry dates, document type, body, and any official links.
 6. Review the visibility, office, reference format, and content before creating the record.
-7. For public records, download the generated QR or copy the public verification URL. For confidential records, copy the confidential reference and include it only in the authorised letter; there is no public QR or verification link.
+7. For either classification, download the verification QR or copy the verification URL. Public records can also be verified by their public ID. Confidential records use only their random serial as the verification key; only share the QR/link with the intended recipient.
 
 Do not create fake live memos for demonstrations. Test in a separate development/preview database.
 
@@ -104,8 +105,8 @@ The schema and migrations live under `prisma/`. For future schema changes, creat
 - Memo creation and its audit entry must remain atomic.
 - Do not silently edit the authoritative contents of an issued memo. Use the revocation flow to withdraw a record.
 - Revocation is operational state and is not included in the content HMAC.
-- Never add public Data API privileges or RLS policies for `anon`/`authenticated` on the private memo registry. Public verification is served through the application with an explicit `PUBLIC` visibility filter.
-- A successful build does not certify database connectivity. Verify login, public memo creation/verification, confidential non-visibility, revocation, and audit persistence after each production migration.
+- Never add public Data API privileges or RLS policies for `anon`/`authenticated` on the memo registry. Exact-reference verification is served through the application; there is no general list/search endpoint. Confidential verification is a bearer-reference model, not recipient identity authentication.
+- A successful build does not certify database connectivity. Verify login, public memo creation/verification, confidential exact-reference verification and non-enumerability, revocation, and audit persistence after each production migration.
 
 ## 9. Migration and release gate
 
