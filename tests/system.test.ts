@@ -452,7 +452,7 @@ describe('NACOS QR authentication and issuance APIs', () => {
     expect(result.memo.serialNumber).toMatch(/^NACOS\/BHU\/PRES\/CONF\/2026\/10\/[23456789ABCDEFGHJKLMNPQRSTUVWXYZ-]+$/);
     mockState.seedMemo(result.memo);
 
-    const verificationPage = await import('../app/verify/VerificationRecord');
+    const verificationPage = await import('../app/verify/verification-record');
     const verification = await verificationPage.default({
       identifier: result.memo.serialNumber,
     });
