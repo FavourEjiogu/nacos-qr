@@ -100,7 +100,9 @@ export default function AdminDashboard() {
         ) : (
           memos.map((memo) => {
             const isPublic = memo.visibility === 'PUBLIC' && Boolean(memo.publicId);
-            const verifyUrl = isPublic ? `${baseUrl}/verify/${memo.publicId}` : '';
+            const verifyUrl = isPublic
+              ? `${baseUrl}/verify/${memo.publicId}`
+              : `${baseUrl}/verify/${encodeURIComponent(memo.serialNumber)}`;
             const isActive = memo.status === 'ACTIVE';
             
             return (
@@ -122,7 +124,7 @@ export default function AdminDashboard() {
                     Issuing office: <span style={{ fontWeight: 500 }}>{memo.officeName || 'Office not recorded'} ({memo.officeCode || 'NACOS'})</span>
                   </div>
                   <div className="text-sm" style={{ marginBottom: '8px' }}>
-                    Access: <span style={{ fontWeight: 600 }}>{isPublic ? 'PUBLIC VERIFICATION' : 'CONFIDENTIAL — ADMIN ONLY'}</span>
+                    Access: <span style={{ fontWeight: 600 }}>{isPublic ? 'PUBLIC VERIFICATION' : 'CONFIDENTIAL — RANDOM REFERENCE'}</span>
                   </div>
                   
                   <div className="text-sm mb-4">
@@ -131,19 +133,16 @@ export default function AdminDashboard() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    {isPublic ? (
-                      <>
-                        <Link href={`/verify/${memo.publicId}`} target="_blank" style={{ fontWeight: 500 }}>
-                          Verify ↗
-                        </Link>
-                        <button
-                          onClick={() => { void navigator.clipboard.writeText(verifyUrl); }}
-                          style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '4px' }}
-                        >
-                          Copy verification URL
-                        </button>
-                      </>
-                    ) : (
+                    <Link href={verifyUrl} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500 }}>
+                      Verify ↗
+                    </Link>
+                    <button
+                      onClick={() => { void navigator.clipboard.writeText(verifyUrl); }}
+                      style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '4px' }}
+                    >
+                      Copy verification URL
+                    </button>
+                    {!isPublic && (
                       <button
                         onClick={() => { void navigator.clipboard.writeText(memo.serialNumber); }}
                         style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '4px' }}
@@ -163,23 +162,20 @@ export default function AdminDashboard() {
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', minWidth: '140px' }}>
-                  {isPublic ? (
-                    <>
-                      <div style={{ background: '#fff', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}>
-                        <QRCodeSVG id={`qr-${memo.id}`} value={verifyUrl} size={100} level="H" />
-                      </div>
-                      <button
-                        onClick={() => downloadQRSVG(memo.id, memo.serialNumber)}
-                        className="btn btn-secondary"
-                        style={{ padding: '8px 12px', fontSize: '12px', minHeight: '40px' }}
-                      >
-                        Download QR
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-sm" style={{ maxWidth: '160px', textAlign: 'center', padding: '16px', border: '1px dashed var(--border)', borderRadius: '8px' }}>
-                      No public QR is issued for confidential records.
-                    </div>
+                  <div style={{ background: '#fff', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}>
+                    <QRCodeSVG id={`qr-${memo.id}`} value={verifyUrl} size={100} level="H" />
+                  </div>
+                  <button
+                    onClick={() => downloadQRSVG(memo.id, memo.serialNumber)}
+                    className="btn btn-secondary"
+                    style={{ padding: '8px 12px', fontSize: '12px', minHeight: '40px' }}
+                  >
+                    Download QR
+                  </button>
+                  {!isPublic && (
+                    <p className="text-sm" style={{ maxWidth: '170px', textAlign: 'center' }}>
+                      Anyone with this reference or QR can view the verification record. Share only with the intended recipient.
+                    </p>
                   )}
                 </div>
               </div>
