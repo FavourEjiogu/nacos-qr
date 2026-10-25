@@ -76,7 +76,27 @@ Required values:
 - `APP_SECRET`: the long-lived HMAC key for memo integrity. Do **not** rotate it during migration.
 - `NEXT_PUBLIC_VERIFY_BASE_URL`: canonical public origin, `https://nacos-qr.vercel.app` in production or `http://localhost:3000` locally.
 
-The Supabase pooler host confirmed for this project is `aws-1-eu-central-1.pooler.supabase.com`. The runtime uses `nacos_app.ayatnoolplaimcokvsfs` on the Transaction pooler, not the more privileged `postgres` user. The Session pooler uses `postgres.ayatnoolplaimcokvsfs` for Prisma migrations. Enter the actual passwords only in Supabase/Vercel secure settings, percent-encoding reserved characters. Never use a `NEXT_PUBLIC_` prefix for database credentials.
+The confirmed shared pooler host for this project is `aws-1-eu-central-1.pooler.supabase.com`. Runtime uses the least-privilege `nacos_app.ayatnoolplaimcokvsfs` role on Transaction pooler port 6543; do not use the default `postgres` role for normal application requests. Prisma migrations use `postgres.ayatnoolplaimcokvsfs` on Session pooler port 5432.
+
+### Configure credentials securely
+
+1. In a password manager, generate a separate strong random **64-character hexadecimal** password for the `nacos_app` runtime role. This alphabet avoids URL-reserved characters.
+2. In Supabase Dashboard → **SQL Editor**, run the command below after replacing the quoted placeholder locally. Never paste the real password into chat or commit it to GitHub.
+
+   ```sql
+   ALTER ROLE nacos_app WITH LOGIN PASSWORD '<your-generated-64-character-hex-password>';
+   ```
+
+3. For `SUPABASE_DATABASE_URL_UNPOOLED`, use the current database-owner password for `postgres`. If you do not have it, reset the database password in Supabase Dashboard → **Database Settings**, then use the new password directly in Vercel. A reset changes that database credential, so update any other services that depend on it before using it.
+4. In Vercel → Project → **Settings → Environment Variables**, first add both variables as **Sensitive** for **Preview** and branch `migration/supabase-postgres`. Redeploy the branch to test the connection. Only add them to Production when cutover is explicitly approved.
+5. The connection templates are:
+
+   ```dotenv
+   SUPABASE_DATABASE_URL="postgresql://nacos_app.ayatnoolplaimcokvsfs:<APP_PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require"
+   SUPABASE_DATABASE_URL_UNPOOLED="postgresql://postgres.ayatnoolplaimcokvsfs:<DATABASE_PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require"
+   ```
+
+   Replace placeholders in Vercel, not in source control. If you choose a password with URL-reserved characters, percent-encode it. Never use a `NEXT_PUBLIC_` prefix for database credentials.
 
 The existing Neon-managed `DATABASE_URL` variables are intentionally preserved until source data and runtime flows have been reconciled. The app uses the Supabase-specific variables only.
 
