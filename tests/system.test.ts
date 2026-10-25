@@ -172,7 +172,7 @@ function makeMemo(overrides: Record<string, any> = {}) {
   const memo: Record<string, any> = {
     id: 'seed-memo',
     publicId: generatePublicId(),
-    serialNumber: 'NACOS/BHU/PRES/PUB/2026/0001',
+    serialNumber: 'NACOS/BHU/PRES/PUB/2026/10/0001',
     title: 'Test Memo',
     summary: 'A verification fixture',
     body: 'This is a test memo.',
