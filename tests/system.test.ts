@@ -285,6 +285,25 @@ describe('NACOS QR reference numbering', () => {
     serials.forEach((serial) => expect(serial).toMatch(/^NACOS\/BHU\/PRES\/PUB\/2026\/\d{4,}$/));
   });
 
+  it('starts a new public sequence on month and year boundaries without resetting older months', async () => {
+    const october31 = new Date('2026-10-31T23:59:59.000Z');
+    const november1 = new Date('2026-11-01T00:00:00.000Z');
+    const january1 = new Date('2027-01-01T00:00:00.000Z');
+
+    const octoberFirst = await generateSerialNumber({ visibility: 'PUBLIC', officeCode: 'PRES', issuedAt: october31 });
+    const novemberFirst = await generateSerialNumber({ visibility: 'PUBLIC', officeCode: 'PRES', issuedAt: november1 });
+    const octoberSecond = await generateSerialNumber({ visibility: 'PUBLIC', officeCode: 'PRES', issuedAt: october31 });
+    const januaryFirst = await generateSerialNumber({ visibility: 'PUBLIC', officeCode: 'PRES', issuedAt: january1 });
+
+    expect(octoberFirst).toBe('NACOS/BHU/PRES/PUB/2026/10/0001');
+    expect(novemberFirst).toBe('NACOS/BHU/PRES/PUB/2026/11/0001');
+    expect(octoberSecond).toBe('NACOS/BHU/PRES/PUB/2026/10/0002');
+    expect(januaryFirst).toBe('NACOS/BHU/PRES/PUB/2027/01/0001');
+    expect(mockState.counters.has('PUBLIC:PRES:2026:10')).toBe(true);
+    expect(mockState.counters.has('PUBLIC:PRES:2026:11')).toBe(true);
+    expect(mockState.counters.has('PUBLIC:PRES:2027:01')).toBe(true);
+  });
+
   it('generates unpredictable private references without touching public counters', async () => {
     const before = mockState.prisma.serialCounter.upsert.mock.calls.length;
     const first = await generateSerialNumber({
@@ -434,12 +453,15 @@ describe('NACOS QR authentication and issuance APIs', () => {
     mockState.seedMemo(result.memo);
 
     const verificationPage = await import('../app/verify/[id]/page');
-    const notFound = await verificationPage.default({
+    const verification = await verificationPage.default({
       params: Promise.resolve({ id: encodeURIComponent(result.memo.serialNumber) }),
     });
-    expect(JSON.stringify(notFound)).toContain('RECORD NOT FOUND');
+    expect(JSON.stringify(verification)).toContain('CONFIDENTIAL');
+    expect(JSON.stringify(verification)).toContain('VERIFIED — ACTIVE');
+    expect(JSON.stringify(verification)).toContain('anyone who obtains them can view this verification record');
     expect(mockState.prisma.memo.findFirst).toHaveBeenCalledWith({
-      where: { serialNumber: result.memo.serialNumber, visibility: 'PUBLIC' },
+      where: { serialNumber: result.memo.serialNumber },
+      include: { links: true },
     });
   });
 
