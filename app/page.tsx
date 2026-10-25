@@ -11,7 +11,13 @@ export default function Home() {
     e.preventDefault();
     const query = memoId.trim();
     if (query) {
-      router.push(`/verify/${encodeURIComponent(query)}`);
+      // Keep slash-separated serials in a query parameter instead of an encoded
+      // path segment, which is handled inconsistently by some proxies.
+      if (query.includes('/')) {
+        router.push(`/verify?ref=${encodeURIComponent(query)}`);
+      } else {
+        router.push(`/verify/${encodeURIComponent(query)}`);
+      }
     }
   };
 
