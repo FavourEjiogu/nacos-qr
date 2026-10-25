@@ -33,3 +33,10 @@
 ### MITIGATED — Custom office code collision
 - **Observation:** Office codes are primary keys in the persistent IssuingOffice registry. Issuance takes a transaction-scoped advisory lock by code, rechecks the registered name, and writes the memo, serial counter, and audit record in one transaction.
 - **Mitigation:** The database foreign key prevents memos from referencing unregistered offices; a name/code mismatch returns HTTP 409. Continue to use the predefined office list where possible.
+
+
+### Accepted limitation — Confidential reference is a bearer key
+- **Design:** Confidential records are not enumerated or assigned a public verification ID, but an exact unpredictable serial/QR opens the full verification record.
+- **Consequence:** Anyone who receives or photographs the reference can access the record. The reference is not encryption, access control by recipient, or proof of the viewer's identity.
+- **Mitigation:** Show a warning at issuance and verification; noindex/no-store/no-referrer headers reduce accidental discovery/leakage. For information that must stay private if forwarded, use a separate private delivery channel and do not store that content in a bearer-verifiable record.
+- **Status:** Explicit product choice, documented in README and operator guide.
