@@ -10,7 +10,7 @@ NACOS QR is the official NACOS document-verification system. Administrators crea
 - HMAC-SHA256 integrity verification for authoritative memo content
 - Admin-only memo creation and revocation
 - Office-scoped public references and unpredictable confidential references
-- Separate public-verification and confidential-register workflows
+- Public-ID verification and exact-match confidential-reference verification
 - Document type, addressed-to, issuer, issuer contact, dates, and official links
 - Audit logging for administrative actions
 - Supabase PostgreSQL via Prisma (private server-side connection; RLS enabled on all application tables)
