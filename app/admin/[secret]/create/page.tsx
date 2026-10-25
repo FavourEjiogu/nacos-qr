@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -32,11 +32,16 @@ export default function CreateMemo() {
   const [issuer, setIssuer] = useState('');
   const [issuerPhone, setIssuerPhone] = useState('');
   const [addressedTo, setAddressedTo] = useState('');
-  const [issuedAt, setIssuedAt] = useState<string>(() => getLocalDateInput());
+  const [issuedAt, setIssuedAt] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
 
   const [successData, setSuccessData] = useState<any>(null);
+
+  // Resolve the default date in the user's browser timezone to avoid a server/client hydration mismatch at midnight.
+  useEffect(() => {
+    setIssuedAt((current) => current || getLocalDateInput());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
