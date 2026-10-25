@@ -102,7 +102,7 @@ export default function AdminDashboard() {
             const isPublic = memo.visibility === 'PUBLIC' && Boolean(memo.publicId);
             const verifyUrl = isPublic
               ? `${baseUrl}/verify/${memo.publicId}`
-              : `${baseUrl}/verify/${encodeURIComponent(memo.serialNumber)}`;
+              : `${baseUrl}/verify?ref=${encodeURIComponent(memo.serialNumber)}`;
             const isActive = memo.status === 'ACTIVE';
             
             return (
