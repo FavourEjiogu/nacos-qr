@@ -2,8 +2,17 @@ import { prisma } from '@/lib/prisma';
 import { verifyMemoHash } from '@/lib/crypto';
 import { redirect } from 'next/navigation';
 
+function normalizeIdentifier(value: string): string {
+  try {
+    return decodeURIComponent(value).trim();
+  } catch {
+    // Malformed percent-encoding is simply an unmatched identifier, not a 500.
+    return value.trim();
+  }
+}
+
 export default async function VerificationRecord(props: { identifier: string }) {
-  const decodedId = decodeURIComponent(props.identifier).trim();
+  const decodedId = normalizeIdentifier(props.identifier);
 
   // Public IDs and exact serial references are the only lookup mechanisms.
   // A confidential serial acts as a bearer reference; records are never listed.
