@@ -1,0 +1,48 @@
+# Architecture Decisions
+
+## ADR-001 — Keep Prisma; replace Neon with Supabase PostgreSQL
+**Decision:** Keep the existing Next.js/Prisma architecture and change the PostgreSQL host rather than introducing Supabase Auth or rewriting data access to REST/RPC.
+
+**Reason:** Existing app logic relies on Prisma transactions for atomic memo creation + audit logging, serial counters, and relational memo links. A backend rewrite during an urgent issuance workflow would increase risk.
+
+## ADR-002 — Use Supavisor pooler strings on Vercel
+**Decision:** Use the exact Supabase transaction pooler connection string for `SUPABASE_DATABASE_URL` and session pooler string for `SUPABASE_DATABASE_URL_UNPOOLED`; preserve Neon-managed `DATABASE_URL` variables as fallback.
+
+**Reason:** Vercel serverless runtime does not support direct IPv6 database connections in the default environment. Pooler hosts vary and must be copied from Supabase Connect; do not synthesize them.
+
+## ADR-003 — Deny public Data API access
+**Decision:** Enable RLS, grant all-row policies only to the private `nacos_app` runtime role, and revoke table privileges from `anon` and `authenticated`.
+
+**Reason:** Public verification is mediated by server-side application logic. Granting table-wide SELECT would expose the complete memo registry and could reveal unpublished records.
+
+## ADR-004 — Preserve HMAC key
+**Decision:** Keep the existing `APP_SECRET` unchanged during migration.
+
+**Reason:** Existing memo hashes are verified against this key; rotation without a key-versioned migration invalidates previously issued signatures.
+
+## ADR-005 — Do not switch production before reconciliation
+**Decision:** Keep Neon as fallback and do not merge the migration until the connection is configured and source/target data are reconciled.
+
+**Reason:** A database switch without record migration can break existing QR codes and verification IDs.
+
+## ADR-006 — Separate monthly public series and confidential bearer references
+**Decision:** Public records use sequential series scoped by office, UTC year, and month, plus a random public verification ID. Confidential letters use the same office/year/month identifying prefix but a cryptographically random 26-character token, no public verification ID, and an exact-reference QR/URL. There is no public directory or sequential counter for confidential records.
+
+**Reason:** Office and issuance period should be legible and month/year rollover deterministic. Confidential references need to remain verifiable without being guessable through sequential enumeration. Because exact-reference verification displays the record, possession of the confidential serial/QR is bearer access; it is not recipient authentication or encryption.
+
+## ADR-007 — Keep office identity and security controls visible to authorised administrators
+**Decision:** Include office code and office name on every new record and in the versioned HMAC. Provide authenticated UI controls for password change, private URL rotation, and URL recovery.
+
+**Reason:** Official references should identify their issuing office, while administrators should be able to rotate credentials without manual environment-file edits. Old HMAC versions remain compatible.
+
+
+## ADR-008 — Database-enforced office registry and atomic public series
+**Decision:** Store office codes in a dedicated `IssuingOffice` table with a primary key, link every memo to a registered office, serialize first-use registration with a transaction-scoped advisory lock, and allocate a public serial in the same transaction that writes the memo and audit event.
+
+**Reason:** The office portion of an official reference must not change identity or collide when multiple administrators issue documents concurrently. A failed issuance must not consume a public sequence number or leave a partial memo/audit record.
+
+
+## ADR-009 — Use a query route for slash-separated confidential serials
+**Decision:** Public IDs keep the canonical `/verify/<PUBLIC_ID>` route. Slash-separated serial references are submitted through `/verify?ref=<encoded-serial>`, which avoids proxy ambiguity around encoded slashes.
+
+**Reason:** Serial formats intentionally contain path separators for readability, but encoded slashes do not route consistently through every proxy. A query-based route preserves the printed reference and QR functionality while keeping lookup exact-match only. Verification pages are marked noindex, noarchive, no-store, and no-referrer to reduce accidental token leakage.

@@ -81,8 +81,9 @@ export default function AdminDashboard() {
         <h2 className="heading" style={{ fontSize: '24px' }}>Memo Registry</h2>
         <div style={{ display: 'flex', gap: '12px' }}>
           <Link href={`/admin/${secret}/create`} className="btn">
-            New Memo
+            New document
           </Link>
+          <Link href={`/admin/${secret}/settings`} className="btn btn-secondary">Security settings</Link>
           <button onClick={logout} className="btn btn-secondary">
             Logout
           </button>
@@ -98,11 +99,14 @@ export default function AdminDashboard() {
           </div>
         ) : (
           memos.map((memo) => {
-            const verifyUrl = `${baseUrl}/verify/${memo.publicId}`;
+            const isPublic = memo.visibility === 'PUBLIC' && Boolean(memo.publicId);
+            const verifyUrl = isPublic
+              ? `${baseUrl}/verify/${memo.publicId}`
+              : `${baseUrl}/verify?ref=${encodeURIComponent(memo.serialNumber)}`;
             const isActive = memo.status === 'ACTIVE';
             
             return (
-              <div key={memo.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', padding: '24px' }}>
+              <div key={memo.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px', padding: '24px' }}>
                 <div style={{ flex: 1, paddingRight: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                     <span className="mono" style={{ fontWeight: 500, fontSize: '18px' }}>{memo.serialNumber}</span>
@@ -116,21 +120,36 @@ export default function AdminDashboard() {
                   <div className="text-sm" style={{ marginBottom: '8px' }}>
                     Type: <span style={{ fontWeight: 500 }}>{memo.documentType || 'Other'}</span>
                   </div>
-                  
-                  <div className="text-sm mb-4">
-                    Issued: {new Date(memo.createdAt).toLocaleDateString()} | ID: <span className="mono">{memo.publicId}</span>
+                  <div className="text-sm" style={{ marginBottom: '8px' }}>
+                    Issuing office: <span style={{ fontWeight: 500 }}>{memo.officeName || 'Office not recorded'} ({memo.officeCode || 'NACOS'})</span>
+                  </div>
+                  <div className="text-sm" style={{ marginBottom: '8px' }}>
+                    Access: <span style={{ fontWeight: 600 }}>{isPublic ? 'PUBLIC VERIFICATION' : 'CONFIDENTIAL — RANDOM REFERENCE'}</span>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <Link href={`/verify/${memo.publicId}`} target="_blank" style={{ fontWeight: 500 }}>
-                      View ↗
+                  <div className="text-sm mb-4">
+                    Issued: {new Date(memo.createdAt).toLocaleDateString()}
+                    {isPublic && <> | Verification ID: <span className="mono">{memo.publicId}</span></>}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    <Link href={verifyUrl} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500 }}>
+                      Verify ↗
                     </Link>
-                    <button 
-                      onClick={() => { navigator.clipboard.writeText(verifyUrl); alert('URL copied'); }} 
+                    <button
+                      onClick={() => { void navigator.clipboard.writeText(verifyUrl); }}
                       style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '4px' }}
                     >
-                      Copy URL
+                      Copy verification URL
                     </button>
+                    {!isPublic && (
+                      <button
+                        onClick={() => { void navigator.clipboard.writeText(memo.serialNumber); }}
+                        style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '4px' }}
+                      >
+                        Copy confidential reference
+                      </button>
+                    )}
                     {isActive && (
                       <button 
                          onClick={() => handleRevoke(memo.id)} 
@@ -142,17 +161,22 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', minWidth: '120px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', minWidth: '140px' }}>
                   <div style={{ background: '#fff', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}>
                     <QRCodeSVG id={`qr-${memo.id}`} value={verifyUrl} size={100} level="H" />
                   </div>
-                  <button 
-                    onClick={() => downloadQRSVG(memo.id, memo.serialNumber)} 
+                  <button
+                    onClick={() => downloadQRSVG(memo.id, memo.serialNumber)}
                     className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '12px' }}
+                    style={{ padding: '8px 12px', fontSize: '12px', minHeight: '40px' }}
                   >
                     Download QR
                   </button>
+                  {!isPublic && (
+                    <p className="text-sm" style={{ maxWidth: '170px', textAlign: 'center' }}>
+                      Anyone with this reference or QR can view the verification record. Share only with the intended recipient.
+                    </p>
+                  )}
                 </div>
               </div>
             );

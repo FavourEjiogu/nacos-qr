@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { getAdminPasswordHash, getAuthVersion } from '@/lib/admin-config';
 
 const COOKIE_NAME = 'admin_session';
 
@@ -14,7 +15,8 @@ function getJwtSecret(): Uint8Array {
 }
 
 export async function createSession() {
-  const token = await new SignJWT({ admin: true })
+  const sessionVersion = await getAuthVersion();
+  const token = await new SignJWT({ admin: true, sessionVersion })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('2h')
@@ -36,11 +38,8 @@ export async function destroySession() {
 }
 
 export async function verifyPassword(password: string): Promise<boolean> {
-  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
-  if (!adminPasswordHash) {
-    throw new Error('ADMIN_PASSWORD_HASH environment variable is missing.');
-  }
-  return await bcrypt.compare(password, adminPasswordHash);
+  const adminPasswordHash = await getAdminPasswordHash();
+  return bcrypt.compare(password, adminPasswordHash);
 }
 
 export async function isAuthenticated(req?: NextRequest): Promise<boolean> {
@@ -60,8 +59,10 @@ export async function isAuthenticated(req?: NextRequest): Promise<boolean> {
   if (!token) return false;
 
   try {
-    await jwtVerify(token, getJwtSecret());
-    return true;
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    if (payload.admin !== true) return false;
+    const tokenVersion = typeof payload.sessionVersion === 'number' ? payload.sessionVersion : 0;
+    return tokenVersion === await getAuthVersion();
   } catch {
     return false;
   }
